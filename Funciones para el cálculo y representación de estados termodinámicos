@@ -1,0 +1,2385 @@
+	#Definición de función interpola. 
+Esta función determina, mediante la ecuación de la recta, el valor del punto intermedio (y) a partir de la entrada de los parámetros necesarios para definir la recta: dos puntos (x1,y1) y (x2,y2) puntos por los que pasa esa recta, de un punto intermedio (x).
+def interpola(x1,x,x2,y1,y2):
+    variacion_X=x2-x1
+    variacion_Y=y2-y1
+    pendienteYX=variacion_Y/variacion_X
+    y=y1+pendienteYX*(x-x1)
+return y
+
+
+#Función de importación de las tablas de datos correspondiente al agua saturada, cuando la entrada es la temperatura, y la presión. El formato de importación es “.csv” que se corresponde con una cadena de caracteres.
++ Función para importar los valores de la tabla de agua saturada con la temperatura como entrada.
+import csv
+aguasat_temp=list( csv.reader(open(DATA+'aguasat_temp','rU')) )
+e=0
+aguasat_temp_T=[]
+while e<len(aguasat_temp):
+    aguasat_temp_T.append([float(aguasat_temp[e][0]),float(aguasat_temp[e][1]),float(aguasat_temp[e][2]),float(aguasat_temp[e][3]),float(aguasat_temp[e][4]),float(aguasat_temp[e][5]),float(aguasat_temp[e][6]),float(aguasat_temp[e][7]),float(aguasat_temp[e][8]),float(aguasat_temp[e][9]),float(aguasat_temp[e][10]),float(aguasat_temp[e][11]),float(aguasat_temp[e][12])])
+    e=e+1
++ Función para importar los valores de la tabla de agua saturada con la presión como entrada.
+import csv
+aguasat_presion=list( csv.reader(open(DATA+'aguasat_presion','rU')) )
+p=0
+aguasat_presion_P=[]
+while p<len(aguasat_presion):
+    aguasat_presion_P.append([float(aguasat_presion[p][0]),float(aguasat_presion[p][1]),float(aguasat_presion[p][2]),float(aguasat_presion[p][3]),float(aguasat_presion[p][4]),float(aguasat_presion[p][5]),float(aguasat_presion[p][6]),float(aguasat_presion[p][7]),float(aguasat_presion[p][8]),float(aguasat_presion[p][9]),float(aguasat_presion[p][10]),float(aguasat_presion[p][11]),float(aguasat_presion[p][12])])
+    p=p+1
+
+#Funciones para la obtención de valores de saturación no tabulados en agua saturada con temperatura o presión como entrada.
++interpolaT(t): Esta función devuelve los valores de saturación para cualquier temperatura comprendida entre 0 y 373.95°C, junto con una representación de la línea de saturación en un diagrama T-s. Realiza una llamada a la función interpola para calcular los valores no tabulados.
+def interpolaT(t):
+    M=[]
+    #t=2.5
+    A=[]
+    B=[]
+    i=0;
+    if t>373.95 or t==0 or t<0:
+        return 'Imposible interpolar para agua saturada'
+    else:
+        while i<len(aguasat_temp_T):
+            M.append(abs(aguasat_temp_T[i][0]-t));
+            i=i+1
+        l=0
+        H=minimos(M)[1]
+        if len(H)==2:
+            C=H
+            F=H[1]
+        else:
+            while l<len(M):
+                if M[l]==minimos(M)[0]:
+                    A.append(M[l])
+                    C=minimos(M)[1]
+                else:
+                    B.append(M[l])
+                    K=minimos(B)[0]
+                l=l+1
+            u=0
+            while u<len(M):
+                if M[u]==K:
+                    F=u
+                u=u+1
+
+        if t<370 and aguasat_temp_T[F][0]==Tcr:
+            C[0]=C[0]-1
+            F=F-1
+        
+        if t>5 and aguasat_temp_T[F][0]==aguasat_temp_T[0][0]:
+            C[0]=C[0]+1
+            F=F+1
+                
+        Presion_inter=interpola(aguasat_temp_T[C[0]][0],t,aguasat_temp_T[F][0],aguasat_temp_T[C[0]][1],aguasat_temp_T[F][1])   
+            
+        Vf_inter=interpola(aguasat_temp_T[C[0]][0],t,aguasat_temp_T[F][0],aguasat_temp_T[C[0]][2],aguasat_temp_T[F][2])
+        Vg_inter=interpola(aguasat_temp_T[C[0]][0],t,aguasat_temp_T[F][0],aguasat_temp_T[C[0]][3],aguasat_temp_T[F][3])
+            
+        Uf_inter=interpola(aguasat_temp_T[C[0]][0],t,aguasat_temp_T[F][0],aguasat_temp_T[C[0]][4],aguasat_temp_T[F][4])
+        Ug_inter=interpola(aguasat_temp_T[C[0]][0],t,aguasat_temp_T[F][0],aguasat_temp_T[C[0]][6],aguasat_temp_T[F][6])
+        Uevap_inter=Ug_inter-Uf_inter
+            
+        Hf_inter=interpola(aguasat_temp_T[C[0]][0],t,aguasat_temp_T[F][0],aguasat_temp_T[C[0]][7],aguasat_temp_T[F][7])
+        Hg_inter=interpola(aguasat_temp_T[C[0]][0],t,aguasat_temp_T[F][0],aguasat_temp_T[C[0]][9],aguasat_temp_T[F][9])
+        Hevap_inter=Hg_inter-Hf_inter
+            
+        Sf_inter=interpola(aguasat_temp_T[C[0]][0],t,aguasat_temp_T[F][0],aguasat_temp_T[C[0]][10],aguasat_temp_T[F][10])
+        Sg_inter=interpola(aguasat_temp_T[C[0]][0],t,aguasat_temp_T[F][0],aguasat_temp_T[C[0]][12],aguasat_temp_T[F][12])
+        Sevap_inter=Sg_inter-Sf_inter
+
+        H0="Temperatura= " + str(t) + " grados Celsius"
+        H1=";                                                                Presion de saturacion= " + str(Presion_inter) + " kPa"
+        H2=";                                                                    Volumen esp liq sat= " + str( Vf_inter) + " m3/kg"
+        H3=";                                                                    Volumen esp vap sat= " + str( Vg_inter) + " m3/kg"
+        H4=";                                                                Energia int esp liq sat= " + str( Uf_inter) + " kJ/kg"
+        H5=";                                                                Energia int esp evap= " + str( Uevap_inter) + " kJ/kg"
+        H6=";                                                                Energia int esp vap sat= " + str( Ug_inter) + " kJ/kg"
+        H7=";                                                                   Entalpia esp liq sat= " + str( Hf_inter) + " kJ/kg"
+        H8=";                                                                   Entalpia esp evap= " + str( Hevap_inter) + " kJ/kg"
+        H9=";                                                                   Entalpia esp vap sat= " + str( Hg_inter) + " kJ/kg"
+        H10=";                                                                 Entropia esp liq sat= " + str( Sf_inter) + " kJ/kgK"
+        H11=";                                                                 Entropia esp evap= " + str( Sevap_inter) + " kJ/kgK"
+        H12=";                                                                 Entropia esp vap sat= " + str( Sg_inter) + " kJ/kgK"
+    
+        TS=zip(vector_representacion_entropia,vector_representacion_temp)
+        if t==373.95:
+            puntos=[(Sf_inter,t),(Sg_inter,t)]
+            show(line(TS)+point(puntos,rgbcolor='red',pointsize=20))
+            return H0+H1+H2+H3+H4+H5+H6+H7+H8+H9+H10+H11+H12
+        else:
+            puntos=[(Sf_inter,t),(Sg_inter,t)]
+            var('x')
+            T(x)=t
+            show(line(TS,rgbcolor='blue')+plot(T(x),puntos[0][0],puntos[1][0],rgbcolor='orange')+text("T("+u"\u00b0"+"C)",(-1,1300),rgbcolor='black')+text('s(kJ/kgK)',(9,-30),rgbcolor='black')+point(puntos,rgbcolor='red',pointsize=20))
+            return H0+H1+H2+H3+H4+H5+H6+H7+H8+H9+H10+H11+H12
+
+#interpolaP(t): Esta función devuelve los valores de saturación para cualquier presión comprendida entre 1 y 22064 kPa, junto con una representación de la línea de saturación en un diagrama T-s. Realiza una llamada a la función interpola para calcular los valores no tabulados.
+def interpolaP(t):
+    M=[]
+    #t=2.5
+    A=[]
+    B=[]
+    i=0;
+    if t>22064 or t==0 or t<1:
+        return 'Imposible interpolar para agua saturada'
+    else:
+        while i<len(aguasat_presion_P):
+            M.append(abs(aguasat_presion_P[i][0]-t));
+            i=i+1
+        l=0
+        H=minimos(M)[1]
+        if len(H)==2:
+            C=H
+            F=H[1]
+        else:
+            while l<len(M):
+                if M[l]==minimos(M)[0]:
+                    A.append(M[l])
+                    C=minimos(M)[1]
+               else:
+                    B.append(M[l])
+                    K=minimos(B)[0]
+                l=l+1
+            u=0
+            while u<len(M):
+                if M[u]==K:
+                    F=u
+                u=u+1  
+        if t<22000 and aguasat_presion_P[F][0]==Pcr:
+            C[0]=C[0]-1
+            F=F-1
+                
+        Temp_inter=interpola(aguasat_presion_P[C[0]][0],t,aguasat_presion_P[F][0],aguasat_presion_P[C[0]][1],aguasat_presion_P[F][1])   
+            
+        Vf_inter=interpola(aguasat_presion_P[C[0]][0],t,aguasat_presion_P[F][0],aguasat_presion_P[C[0]][2],aguasat_presion_P[F][2])
+        Vg_inter=interpola(aguasat_presion_P[C[0]][0],t,aguasat_presion_P[F][0],aguasat_presion_P[C[0]][3],aguasat_presion_P[F][3])
+            
+        Uf_inter=interpola(aguasat_presion_P[C[0]][0],t,aguasat_presion_P[F][0],aguasat_presion_P[C[0]][4],aguasat_presion_P[F][4])
+        Ug_inter=interpola(aguasat_presion_P[C[0]][0],t,aguasat_presion_P[F][0],aguasat_presion_P[C[0]][6],aguasat_presion_P[F][6])
+        Uevap_inter=Ug_inter-Uf_inter
+            
+        Hf_inter=interpola(aguasat_presion_P[C[0]][0],t,aguasat_presion_P[F][0],aguasat_presion_P[C[0]][7],aguasat_presion_P[F][7])
+        Hg_inter=interpola(aguasat_presion_P[C[0]][0],t,aguasat_presion_P[F][0],aguasat_presion_P[C[0]][9],aguasat_presion_P[F][9])
+        Hevap_inter=Hg_inter-Hf_inter
+            
+        Sf_inter=interpola(aguasat_presion_P[C[0]][0],t,aguasat_presion_P[F][0],aguasat_presion_P[C[0]][10],aguasat_presion_P[F][10])
+        Sg_inter=interpola(aguasat_presion_P[C[0]][0],t,aguasat_presion_P[F][0],aguasat_presion_P[C[0]][12],aguasat_presion_P[F][12])
+        Sevap_inter=Sg_inter-Sf_inter
+
+        print "Presion= " + str(t) + " KPa"
+        print "Temperatura de saturacion= " + str(Temp_inter) + " grados Celsius"
+        print "Volumen esp liq sat= " + str( Vf_inter) + " m3/kg"
+        print "Volumen esp vap sat= " + str( Vg_inter) + " m3/kg"
+        print "Energia int esp liq sat= " + str( Uf_inter) + " kJ/kg"
+        print "Energia int esp evap= " + str( Uevap_inter) + " kJ/kg"
+        print "Energia int esp vap sat= " + str( Ug_inter) + " kJ/kg"
+        print "Entalpia esp liq sat= " + str( Hf_inter) + " kJ/kg"
+        print "Entalpia esp evap= " + str( Hevap_inter) + " kJ/kg"
+        print "Entalpia esp vap sat= " + str( Hg_inter) + " kJ/kg"
+        print "Entropia esp liq sat= " + str( Sf_inter) + " kJ/kgK"
+        print "Entropia esp evap= " + str( Sevap_inter) + " kJ/kgK"
+        print "Entropia esp vap sat= " + str( Sg_inter) + " kJ/kgK"        
+        
+        TS=zip(vector_representacion_entropia,vector_representacion_temp)
+        puntos=[(Sf_inter,Temp_inter),(Sg_inter,Temp_inter)]
+        var('x')
+        T(x)=Temp_inter
+        if t==22064:
+            show(line(TS)+point(puntos,rgbcolor='red',pointsize=20))
+        else:
+            show(line(TS)+point(puntos,rgbcolor='red',pointsize=20)+plot(T(x),puntos[0][0],puntos[1][0],rgbcolor='orange')+text("T("+u"\u00b0"+"C)",(-1,1300),rgbcolor='black')+text('s(kJ/kgK)',(9,-30),rgbcolor='black'))            
+	Funciones para la obtención de propiedades cuyos estados están definidos en el interior de la campana y que se definen a través de título y, temperatura o presión de saturación como entrada.
++interpolaDentroT(tsat,X): Calcula las propiedades del estado definido a partir de temperatura y título de vapor y muestra una representación gráfica en un diagrama T-s de su ubicación junto a los valores de la línea de saturación. Los rangos de actuación son los mismos que interpolaT(t).
+def interpolaDentroT(tsat,X):
+    if X<0 or X>1 or tsat>aguasat_temp_T[len(aguasat_temp_T)-1][0] or tsat<aguasat_temp_T[0][0] :
+        return 'Imposible'    
+    if X<=1 or X>=0 or tsat<=aguasat_temp_T[len(aguasat_temp_T)-1][0] or tsat>=aguasat_temp_T[0][0] :
+        D=interpolaT_SU(tsat)
+        Sx=D[10]+X*(D[12]-D[10])
+        Ux=D[4]+X*(D[6]-D[4])
+        Hx=D[7]+X*(D[9]-D[7])
+        Vx=D[2]+X*(D[3]-D[2])
+        TS=zip(vector_representacion_entropia,vector_representacion_temp)
+        puntos=[(D[10],tsat),(Sx,tsat),(D[12],tsat)]
+        var('x')
+        T(x)=tsat
+        H0="Temperatura= " + str( D[0]) + " grados Celsius"
+        H1=";                                                                        Presion de saturacion= " + str( D[1]) + " kPa"
+        H2=";                                                                       Volumen esp en el punto= " + str( Vx) + " m3/kg"
+        H3=";                                                                     Energia int esp en el punto= " + str( Ux) + " kJ/kg"
+        H4=";                                                                     Entalpia esp en el punto= " + str( Hx) + " kJ/kg"
+        H5=";                                                                      Entropia esp liq sat= " + str( D[10]) + " kJ/kgK"
+        H6=";                                                                     Entropia esp en el punto= " + str( Sx) + " kJ/kgK"
+        H7=";                                                                      Entropia esp vap sat= " + str( D[12]) + " kJ/kgK"                                                                      
+        show(line(TS)+point(puntos,rgbcolor='red',pointsize=20)+plot(T(x),puntos[0][0],puntos[2][0],rgbcolor='orange')+text("T("+u"\u00b0"+"C)",(-1,1300),rgbcolor='black')+text('s(kJ/kgK)',(9,-30),rgbcolor='black'))
+        return H0+H1+H2+H3+H4+H5+H6+H7            
+        
++interpolaDentroP(psat,X): Calcula las propiedades del estado definido a partir de presión y título de vapor y muestra una representación gráfica en un diagrama T-s de su ubicación junto a los valores de la línea de saturación. Los rangos de actuación son los mismos que interpolaP(t).
+def interpolaDentroP(psat,X):
+    if X<0 or X>1 or psat>aguasat_presion_P[len(aguasat_presion_P)-1][0] or psat<aguasat_presion_P[0][0] :
+        return 'Imposible'    
+    if X<=1 or X>=0 or psat<aguasat_presion_P[len(aguasat_presion_P)-1][0] or psat>aguasat_presion_P[0][0] :
+        D=interpolaP_SU(psat)
+        Sx=D[10]+X*(D[12]-D[10])
+        Hx=D[7]+X*(D[9]-D[7])
+        Ux=D[4]+X*(D[6]-D[4])
+        Vx=D[2]+X*(D[3]-D[2])
+        tsat=D[1]
+        TS=zip(vector_representacion_entropia,vector_representacion_temp)
+        puntos=[(D[10],tsat),(Sx,tsat),(D[12],tsat)]
+        var('x')
+        T(x)=tsat
+        H0="Presion= " + str( D[0]) + " KPa"
+        H1=";                                                         Temperatura de saturacion= " + str( tsat) + " grados Celsius"
+        H2=";                                                                       Volumen esp en el punto= " + str( Vx) + " m3/kg"
+        H3=";                                                                   Energia int esp en el punto= " + str( Ux) + " kJ/kg"
+        H4=";                                                                     Entalpia esp en el punto= " + str( Hx) + " kJ/kg"
+        H5=";                                                                      Entropia esp liq sat= " + str( D[10]) + " kJ/kgK"
+        H6=";                                                                     Entropia esp en el punto= " + str( Sx) + " kJ/kgK"
+        H7=";                                                                      Entropia esp vap sat= " + str( D[12]) + " kJ/kgK"
+        show(line(TS)+point(puntos,rgbcolor='red',pointsize=20)+plot(T(x),puntos[0][0],puntos[2][0],rgbcolor='orange')+text("T("+u"\u00b0"+"C)",(-1,1300),rgbcolor='black')+text('s(kJ/kgK)',(9,-30),rgbcolor='black'))
+        return H0+H1+H2+H3+H4+H5+H6+H7
+	Función de importación de las tablas de datos correspondiente al vapor sobrecalentado. El formato de importación es “.csv” que se corresponde con una cadena de caracteres. Se le aplica un filtro para evitar todo aquello que no sea convertible a un tipo float.
+import csv
+vaporsobre=list( csv.reader(open(DATA+'vaporsobrecalentado.csv','rU')) )
+
+A=[]
+B=[]
+C=[]
+D=[]
+E=[]
+X=0
+f=1
+while f<len(vaporsobre):
+    if "MPa"==vaporsobre[f][3] or "Mpa"==vaporsobre[f][3]:
+        F=f
+        B.append([str(vaporsobre[F][0]),str(vaporsobre[F][1]),str(vaporsobre[F][2]),str(vaporsobre[F][3]),str(vaporsobre[F][4])])
+        f=f+1
+    if ""== vaporsobre[f][2]:
+        Z=f
+        C.append([str(vaporsobre[Z][0]),str(vaporsobre[Z][1]),str(vaporsobre[Z][2]),str(vaporsobre[Z][3]),str(vaporsobre[Z][4])])
+        f=f+1
+    if "Sat."==vaporsobre[f][0]:
+        H=f
+        D.append([str(vaporsobre[H][0]),str(vaporsobre[H][1]),str(vaporsobre[H][2]),str(vaporsobre[H][3]),str(vaporsobre[H][4])])
+        f=f+1
+    if ""==vaporsobre[f][2] and ""==vaporsobre[f][3]:
+        E.append([str(vaporsobre[X][0]),str(vaporsobre[X][1]),str(vaporsobre[X][2]),str(vaporsobre[X][3]),str(vaporsobre[X][4])])
+        X=f
+        f=f+1
+    if not(f==F) or not(f==H) or not(f==Z) or not(f==X):
+        A.append([float(vaporsobre[F][2])*1000,float(vaporsobre[f][0]),float(vaporsobre[f][1]),float(vaporsobre[f][2]),float(vaporsobre[f][3]),float(vaporsobre[f][4])])
+        f=f+1
+        
+g=[]
+L=[]
+i=0
+d=0
+J=0
+aguasobre=[]
+while d<len(A):
+    if not(A[d][0]==A[d-1][0]):
+        if A[d][0]<=20000:
+            J=d
+            g.append([interpolaP_SU(A[J][0])[0],interpolaP_SU(A[J][0])[1],interpolaP_SU(A[J][0])[3],interpolaP_SU(A[J][0])[6],interpolaP_SU(A[J][0])[9],interpolaP_SU(A[J][0])[12]])
+    if A[d][0]==A[d-1][0] or A[d][0]>20000:
+        g.append([0,0,0,0,0,0])
+    d=d+1
+G=mezclalistas(g,A)
+P=depuralista(G)   
+w=0
+while w<len(P):
+    if P[w][0]==0:
+        L.append(P[w])
+    else:
+        aguasobre.append(P[w])
+    w=w+1  
+	GeneraListaP(p): Proporciona la lista análoga a las tablas de vapor sobrecalentado para una determinada presión (p) en un rango que va desde los 10 kPa a los 60 MPa. 
+def GeneraListaP(p):    
+    M=[]
+    Y=[]
+    #t=1000
+    #p=500
+    A=[]
+    B=[]
+    T=[]
+    D=[]
+    i=0
+    f=0
+    if p>=10:
+        while i<len(aguasobre):
+            M.append(abs(aguasobre[i][0]-p))
+            i=i+1
+        C=minimos(M)
+        if veces(C[0],M)>20:
+            V=C[1][0]
+            P1=aguasobre[V][0]
+            F=V+20
+            P2=aguasobre[F][0]
+        if not(veces(C[0],M)>20):
+            l=0
+            while l<len(M):
+                if M[l]==minimos(M)[0]:
+                    D.append(M[l])
+                    C=minimos(M)[1][0]
+                else:
+                    B.append(M[l])
+                    K=minimos(B)[0]
+                l=l+1
+            u=0
+            while u<len(M):
+                if M[u]==K:
+                    F=u
+                u=u+1    
+            P1=aguasobre[C][0]
+            P2=aguasobre[F][0]
+        A=[]
+        B=[]
+        x=0
+        while x<len(aguasobre):
+            if aguasobre[x][0]==P1:
+                A.append([P1,aguasobre[x][1],aguasobre[x][2],aguasobre[x][3],aguasobre[x][4],aguasobre[x][5]])
+            if aguasobre[x][0]==P2:
+                B.append([P2,aguasobre[x][1],aguasobre[x][2],aguasobre[x][3],aguasobre[x][4],aguasobre[x][5]])          
+            x=x+1
+        if len(B)<len(A):
+            m=0
+            Tabla=[]
+            H=[]
+            while m<len(B):
+                j=0
+                while j<len(A):
+                    if A[j][1]==B[m][1]:
+                        H.append([p,interpola(A[j][0],p,B[m][0],A[j][1],B[m][1]),interpola(A[j][0],p,B[m][0],A[j][2],B[m][2]),interpola(A[j][0],p,B[m][0],A[j][3],B[m][3]),interpola(A[j][0],p,B[m][0],A[j][4],B[m][4]),interpola(A[j][0],p,B[m][0],A[j][5],B[m][5])])
+                    j=j+1    
+                m=m+1
+            if p<=22064:
+                puntos_saturados=[]
+                R=interpolaP_SU(p)
+                tsat=R[1]
+                T=[[p,R[1],R[3],R[6],R[9],R[12]]]
+                puntos_saturados=[(R[10],tsat),(R[12],tsat)]
+            else:
+                puntos_saturados=[]    
+        if len(A)<=len(B):
+            m=0
+            Tabla=[]
+            T=[]
+            H=[]
+            while m<len(A):
+                j=0
+                while j<len(B):
+                    if A[m][1]==B[j][1]:
+                        H.append([p,interpola(A[m][0],p,B[j][0],A[m][1],B[j][1]),interpola(A[m][0],p,B[j][0],A[m][2],B[j][2]),interpola(A[m][0],p,B[j][0],A[m][3],B[j][3]),interpola(A[m][0],p,B[j][0],A[m][4],B[j][4]),interpola(A[m][0],p,B[j][0],A[m][5],B[j][5])])
+                    j=j+1    
+                m=m+1
+            if p<=22064:
+                puntos_saturados=[]
+                R=interpolaP_SU(p)
+                tsat=R[1]
+                puntos_saturados=[(R[10],tsat),(R[12],tsat)]
+                T=[[p,R[1],R[3],R[6],R[9],R[12]]]
+            else:
+                puntos_saturados=[]      
+        Tabla=T+H
+        return Tabla
+	interpola_VAPOR(p,t):  Es la función que obtiene las propiedades para los estados definidos a través de temperatura y presión en la región de vapor sobrecalentado. Devuelve un diagrama T-s con el estado ubicado, y con su respectiva isobara. Los rangos de actuación son los mismos que GeneraListaP(p).
+def interpola_VAPOR(p,t):
+    M=[]
+    Y=[]
+    #t=1000
+    #p=500
+    A=[]
+    B=[]
+    T=[]
+    D=[]
+    i=0
+    f=0
+    if p>=10:
+        while i<len(aguasobre):
+            M.append(abs(aguasobre[i][0]-p))
+            i=i+1
+        C=minimos(M)
+        if veces(C[0],M)>20:
+            V=C[1][0]
+            P1=aguasobre[V][0]
+            F=V+20
+            P2=aguasobre[F][0]
+        if not(veces(C[0],M)>20):
+            l=0
+            while l<len(M):
+                if M[l]==minimos(M)[0]:
+                    D.append(M[l])
+                    C=minimos(M)[1][0]
+                else:
+                    B.append(M[l])
+                    K=minimos(B)[0]
+                l=l+1
+            u=0
+            while u<len(M):
+                if M[u]==K:
+                    F=u
+                u=u+1    
+            P1=aguasobre[C][0]
+            P2=aguasobre[F][0]
+        A=[]
+        B=[]
+        x=0
+        while x<len(aguasobre):
+            if aguasobre[x][0]==P1:
+                A.append([P1,aguasobre[x][1],aguasobre[x][2],aguasobre[x][3],aguasobre[x][4],aguasobre[x][5]])
+            if aguasobre[x][0]==P2:
+                B.append([P2,aguasobre[x][1],aguasobre[x][2],aguasobre[x][3],aguasobre[x][4],aguasobre[x][5]])          
+            x=x+1
+        if len(B)<len(A):
+            m=0
+            Tabla=[]
+            H=[]
+            while m<len(B):
+                j=0
+                while j<len(A):
+                    if A[j][1]==B[m][1]:
+                        H.append([p,interpola(A[j][0],p,B[m][0],A[j][1],B[m][1]),interpola(A[j][0],p,B[m][0],A[j][2],B[m][2]),interpola(A[j][0],p,B[m][0],A[j][3],B[m][3]),interpola(A[j][0],p,B[m][0],A[j][4],B[m][4]),interpola(A[j][0],p,B[m][0],A[j][5],B[m][5])])
+                    j=j+1    
+                m=m+1
+            if p<=22064:
+                puntos_saturados=[]
+                R=interpolaP_SU(p)
+                tsat=R[1]
+                T=[[p,R[1],R[3],R[6],R[9],R[12]]]
+                puntos_saturados=[(R[10],tsat),(R[12],tsat)]
+            else:
+                puntos_saturados=[]    
+        if len(A)<=len(B):
+            m=0
+            Tabla=[]
+            T=[]
+            H=[]
+            while m<len(A):
+                j=0
+                while j<len(B):
+                    if A[m][1]==B[j][1]:
+                        H.append([p,interpola(A[m][0],p,B[j][0],A[m][1],B[j][1]),interpola(A[m][0],p,B[j][0],A[m][2],B[j][2]),interpola(A[m][0],p,B[j][0],A[m][3],B[j][3]),interpola(A[m][0],p,B[j][0],A[m][4],B[j][4]),interpola(A[m][0],p,B[j][0],A[m][5],B[j][5])])
+                    j=j+1    
+                m=m+1
+            if p<=22064:
+                puntos_saturados=[]
+                R=interpolaP_SU(p)
+                tsat=R[1]
+                puntos_saturados=[(R[10],tsat),(R[12],tsat)]
+                T=[[p,R[1],R[3],R[6],R[9],R[12]]]
+            else:
+                puntos_saturados=[]      
+        Tabla=T+H
+        i=0
+        M=[]
+        Y=[]
+        D=[]
+        K=[]
+        
+        while i<len(Tabla):
+            M.append([Tabla[i][1],abs(Tabla[i][1]-t)])
+            i=i+1
+            l=0
+            U=[]
+            U=[a[1] for a in M]
+            J=[]
+            J=[a[0] for a in M]
+            P=minimos(U)[1]
+            if len(P)==2:
+                C=P[0]
+                F=P[1]
+            else:
+                F=0
+                C=P[0]        
+            if J[C]<t or C==0:
+                F=C+1
+            if J[C]>t or C==(len(J)-1):
+                F=C-1
+        if t<Tabla[0][1]:
+            print 'Valor por debajo de la saturacion, Imposible para vapor sobrecalentado'
+        else:
+            Valor=[p,t,interpola(Tabla[C][1],t,Tabla[F][1],Tabla[C][2],Tabla[F][2]),interpola(Tabla[C][1],t,Tabla[F][1],Tabla[C][3],Tabla[F][3]),interpola(Tabla[C][1],t,Tabla[F][1],Tabla[C][4],Tabla[F][4]),interpola(Tabla[C][1],t,Tabla[F][1],Tabla[C][5],Tabla[F][5])]
+
+            print "Presion = " + str(Valor[0]) + " KPa"
+            print "Temperatura = " + str(Valor[1]) + " grados Celsius"
+            print "Volumen Esp = " + str(Valor[2]) + " m3/Kg"
+            print "Energia Int Esp = " + str(Valor[3]) + " KJ/Kg"
+            print "Entalpia Esp = " + str(Valor[4]) + " KJ/Kg"
+            print "Entropia Esp = " + str(Valor[5]) + " KJ/KgK"
+
+            punto=[(Valor[5],t)]
+
+            s=0
+            Tsobre=[]
+            Ssobre=[]
+            while s<len(Tabla):
+                Tsobre.append(Tabla[s][1])
+                Ssobre.append(Tabla[s][5])
+                s=s+1
+            T=zip(Ssobre,Tsobre)
+            #print T
+            TS=zip(vector_representacion_entropia,vector_representacion_temp)
+            if puntos_saturados==[]:
+                show(line(TS)+line(T,rgbcolor='orange')+point(punto,rgbcolor='red',pointsize=20)+text("T("+u"\u00b0"+"C)",(-1,1300),rgbcolor='black')+text('s(kJ/kgK)',(9,-30),rgbcolor='black'))
+            if not(puntos_saturados==[]):
+                show(line(TS)+line(T,rgbcolor='orange')+point(punto,rgbcolor='red',pointsize=20)+point(puntos_saturados,rgbcolor='red',pointsize=20)+line(puntos_saturados,rgbcolor='orange')+text("T("+u"\u00b0"+"C)",(-1,1300),rgbcolor='black')+text('s(kJ/kgK)',(9,-30),rgbcolor='black'))  
+    else:
+        print 'El valor minimo de presion es de 10 Kpa'
+	Función de importación de las tablas de datos correspondiente al líquido subenfriado. El formato de importación es “.csv” que se corresponde con una cadena de caracteres. Se le aplica un filtro para evitar todo aquello que no sea convertible a un tipo float.
+import csv
+Y=list( csv.reader(open(DATA+'aguasubenfriada.csv','rU')) )
+A=[]
+B=[]
+C=[]
+D=[]
+E=[]
+M=[]
+f=0
+while f<len(Y):
+    if "P" == Y[f][0] or "MPa" == Y[f][3]:
+        F=f
+        B.append([str(Y[F][0]),str(Y[F][1]),str(Y[F][2]),str(Y[F][3]),str(Y[F][4])])
+        f=f+1
+    if "Sat."==Y[f][0]:
+        H=f
+        D.append([str(Y[H][0]),str(Y[H][1]),str(Y[H][2]),str(Y[H][3]),str(Y[H][4])])
+        f=f+1                  
+    if not(f==F) or not(f==H):
+        M.append([str(Y[F][2]),str(Y[f][0]),str(Y[f][1]),str(Y[f][2]),str(Y[f][3]),str(Y[f][4])])  
+        f=f+1    
+u=0
+R=[]
+while u<len(M):
+    if M[u][4]=="":
+        u=u+1
+    else:
+        R.append(M[u])
+        u=u+1  
+u=0
+aguasub=[]
+while u<len(R):
+    aguasub.append([float(R[u][0])*1000,float(R[u][1]),float(R[u][2]),float(R[u][3]),float(R[u][4]),float(R[u][5])])
+    u=u+1
+    
+A=aguasub
+g=[]
+d=0
+while d<len(A):
+    if not(A[d][0]==A[d-1][0]) and not(d==0):
+        if A[d][0]<=30000:
+            J=d-1
+            g.append([interpolaP_SU(A[J][0])[0],interpolaP_SU(A[J][0])[1],interpolaP_SU(A[J][0])[2],interpolaP_SU(A[J][0])[4],interpolaP_SU(A[J][0])[7],interpolaP_SU(A[J][0])[10]])
+    if A[d][0]==A[d-1][0] or A[d][0]>20000:
+        g.append([0,0,0,0,0,0])
+        i=i+1
+    d=d+1
+aguasubenfriada=[]
+G=mezclalistas(aguasub,g)
+P=depuralista(G)   
+w=0
+while w<len(P):
+    if P[w][0]==0:
+        L.append(P[w])
+    else:
+        aguasubenfriada.append(P[w])
+    w=w+1            
+	GeneraListaP_SUB(p): Proporciona la lista análoga a las tablas de líquido comprimido para una determinada presión (p) en un rango que va desde los 5 MPa a los 50 MPa.
+def GeneraListaP_SUB(p):
+    M=[]
+    Y=[]
+    #t=1000
+    #p=500
+    A=[]
+    B=[]
+    D=[]
+    i=0
+    f=0
+    if p>=5000 and p<=50000:
+        while i<len(aguasubenfriada):
+            M.append(abs(aguasubenfriada[i][0]-p))
+            i=i+1
+        C=minimos(M)
+        if veces(C[0],M)>20:
+            V=C[1][0]
+            P1=aguasubenfriada[V][0]
+            F=V+20
+            P2=aguasubenfriada[F][0]
+        if not(veces(C[0],M)>20):
+            l=0
+            while l<len(M):
+                if M[l]==minimos(M)[0]:
+                    D.append(M[l])
+                    C=minimos(M)[1][0]
+                else:
+                    B.append(M[l])
+                    K=minimos(B)[0]
+                l=l+1
+            u=0
+            while u<len(M):
+                if M[u]==K:
+                    F=u
+                u=u+1    
+            P1=aguasubenfriada[C][0]
+            P2=aguasubenfriada[F][0]
+        A=[]
+        B=[]
+        x=0
+        while x<len(aguasubenfriada):
+            if aguasubenfriada[x][0]==P1:
+                A.append([P1,aguasubenfriada[x][1],aguasubenfriada[x][2],aguasubenfriada[x][3],aguasubenfriada[x][4],aguasubenfriada[x][5]])
+            if aguasubenfriada[x][0]==P2:
+                B.append([P2,aguasubenfriada[x][1],aguasubenfriada[x][2],aguasubenfriada[x][3],aguasubenfriada[x][4],aguasubenfriada[x][5]])          
+            x=x+1
+        if len(B)<len(A):
+            m=0
+            Tabla=[]
+            H=[]
+            while m<len(B):
+                j=0
+                while j<len(A):
+                    if A[j][1]==B[m][1]:
+                        H.append([p,interpola(A[j][0],p,B[m][0],A[j][1],B[m][1]),interpola(A[j][0],p,B[m][0],A[j][2],B[m][2]),interpola(A[j][0],p,B[m][0],A[j][3],B[m][3]),interpola(A[j][0],p,B[m][0],A[j][4],B[m][4]),interpola(A[j][0],p,B[m][0],A[j][5],B[m][5])])
+                    j=j+1    
+                m=m+1
+            if p<=22064:
+                puntos_saturados=[]
+                R=interpolaP_SU(p)
+                tsat=R[1]
+                T=[[p,R[1],R[2],R[4],R[7],R[10]]]
+                puntos_saturados=[(R[10],tsat),(R[12],tsat)]
+            else:
+                puntos_saturados=[]    
+        if len(A)<=len(B):
+            m=0
+            Tabla=[]
+            T=[]
+            H=[]
+            while m<len(A):
+                j=0
+                while j<len(B):
+                    if A[m][1]==B[j][1]:
+                        H.append([p,interpola(A[m][0],p,B[j][0],A[m][1],B[j][1]),interpola(A[m][0],p,B[j][0],A[m][2],B[j][2]),interpola(A[m][0],p,B[j][0],A[m][3],B[j][3]),interpola(A[m][0],p,B[j][0],A[m][4],B[j][4]),interpola(A[m][0],p,B[j][0],A[m][5],B[j][5])])
+                    j=j+1    
+                m=m+1
+            if p<=22064:
+                puntos_saturados=[]
+                R=interpolaP_SU(p)
+                tsat=R[1]
+                puntos_saturados=[(R[10],tsat),(R[12],tsat)]
+                T=[[p,R[1],R[2],R[4],R[7],R[10]]]
+            else:
+                puntos_saturados=[]      
+        Tabla=H+T    
+        return Tabla
+    else:
+        return 'Imposible para agua subenfriada'
+	interpola_LIQ(p,t):  Es la función que obtiene las propiedades para los estados definidos a través de temperatura y presión en la región de líquido comprimido. Devuelve un diagrama T-s con el estado ubicado, y con su respectiva isobara. Los rangos de actuación son los mismos que GeneraListaP_SUB(p).
+def interpola_LIQ(p,t):
+    M=[]
+    Y=[]
+    #t=1000
+    #p=500
+    A=[]
+    B=[]
+    D=[]
+    i=0
+    f=0
+    if p>=5000 and p<=50000:
+        while i<len(aguasubenfriada):
+            M.append(abs(aguasubenfriada[i][0]-p))
+            i=i+1
+        C=minimos(M)
+        if veces(C[0],M)>20:
+            V=C[1][0]
+            P1=aguasubenfriada[V][0]
+            F=V+20
+            P2=aguasubenfriada[F][0]
+        if not(veces(C[0],M)>20):
+            l=0
+            while l<len(M):
+                if M[l]==minimos(M)[0]:
+                    D.append(M[l])
+                    C=minimos(M)[1][0]
+                else:
+                    B.append(M[l])
+                    K=minimos(B)[0]
+                l=l+1
+            u=0
+            while u<len(M):
+                if M[u]==K:
+                    F=u
+                u=u+1    
+            P1=aguasubenfriada[C][0]
+            P2=aguasubenfriada[F][0]
+        A=[]
+        B=[]
+        x=0
+        while x<len(aguasubenfriada):
+            if aguasubenfriada[x][0]==P1:
+                A.append([P1,aguasubenfriada[x][1],aguasubenfriada[x][2],aguasubenfriada[x][3],aguasubenfriada[x][4],aguasubenfriada[x][5]])
+            if aguasubenfriada[x][0]==P2:
+                B.append([P2,aguasubenfriada[x][1],aguasubenfriada[x][2],aguasubenfriada[x][3],aguasubenfriada[x][4],aguasubenfriada[x][5]])          
+            x=x+1
+        if len(B)<len(A):
+            m=0
+            Tabla=[]
+            H=[]
+            while m<len(B):
+                j=0
+                while j<len(A):
+                    if A[j][1]==B[m][1]:
+                        H.append([p,interpola(A[j][0],p,B[m][0],A[j][1],B[m][1]),interpola(A[j][0],p,B[m][0],A[j][2],B[m][2]),interpola(A[j][0],p,B[m][0],A[j][3],B[m][3]),interpola(A[j][0],p,B[m][0],A[j][4],B[m][4]),interpola(A[j][0],p,B[m][0],A[j][5],B[m][5])])
+                    j=j+1    
+                m=m+1
+            if p<=22064:
+                puntos_saturados=[]
+                R=interpolaP_SU(p)
+                tsat=R[1]
+                T=[[p,R[1],R[2],R[4],R[7],R[10]]]
+                puntos_saturados=[(R[10],tsat),(R[12],tsat)]
+            else:
+                puntos_saturados=[]    
+        if len(A)<=len(B):
+            m=0
+            Tabla=[]
+            T=[]
+            H=[]
+            while m<len(A):
+                j=0
+                while j<len(B):
+                    if A[m][1]==B[j][1]:
+                        H.append([p,interpola(A[m][0],p,B[j][0],A[m][1],B[j][1]),interpola(A[m][0],p,B[j][0],A[m][2],B[j][2]),interpola(A[m][0],p,B[j][0],A[m][3],B[j][3]),interpola(A[m][0],p,B[j][0],A[m][4],B[j][4]),interpola(A[m][0],p,B[j][0],A[m][5],B[j][5])])
+                    j=j+1    
+                m=m+1
+            if p<=22064:
+                puntos_saturados=[]
+                R=interpolaP_SU(p)
+                tsat=R[1]
+                puntos_saturados=[(R[10],tsat),(R[12],tsat)]
+                T=[[p,R[1],R[2],R[4],R[7],R[10]]]
+            else:
+                puntos_saturados=[]      
+        Tabla=H+T
+        i=0
+        M=[]
+        Y=[]
+        D=[]
+        K=[]
+        while i<len(Tabla):
+            M.append([Tabla[i][1],abs(Tabla[i][1]-t)])
+            i=i+1
+            l=0
+            U=[]
+            U=[a[1] for a in M]
+            J=[]
+            J=[a[0] for a in M]
+            P=minimos(U)[1]
+            if len(P)==2:
+                C=P[0]
+                F=P[1]
+            else:
+                F=0
+                C=P[0]        
+            if J[C]<t or C==0:
+                F=C+1
+            if J[C]>t or C==(len(J)-1):
+                F=C-1
+        if t>Tabla[len(Tabla)-1][1]:
+            print 'Valor por encima de la saturacion, Imposible para agua subenfriada'
+        else:
+            Valor=[p,t,interpola(Tabla[C][1],t,Tabla[F][1],Tabla[C][2],Tabla[F][2]),interpola(Tabla[C][1],t,Tabla[F][1],Tabla[C][3],Tabla[F][3]),interpola(Tabla[C][1],t,Tabla[F][1],Tabla[C][4],Tabla[F][4]),interpola(Tabla[C][1],t,Tabla[F][1],Tabla[C][5],Tabla[F][5])]
+
+            print "Presion = " + str(Valor[0]) + " KPa"
+            print "Temperatura = " + str(Valor[1]) + " grados Celsius"
+            print "Volumen Esp = " + str(Valor[2]) + " m3/Kg"
+            print "Energia Int Esp = " + str(Valor[3]) + " KJ/Kg"
+            print "Entalpia Esp = " + str(Valor[4]) + " KJ/Kg"
+            print "Entropia Esp = " + str(Valor[5]) + " KJ/KgK"
+
+            punto=[(Valor[5],t)]
+
+            s=0
+            Tsobre=[]
+            Ssobre=[]
+            while s<len(Tabla):
+                Tsobre.append(Tabla[s][1])
+                Ssobre.append(Tabla[s][5])
+                s=s+1
+            T=zip(Ssobre,Tsobre)
+            #print T
+            TS=zip(vector_representacion_entropia,vector_representacion_temp)
+            if puntos_saturados==[]:
+                show(line(TS)+line(T,rgbcolor='orange')+point(punto,rgbcolor='red',pointsize=20)+text("T("+u"\u00b0"+"C)",(-1,1300),rgbcolor='black')+text('s(kJ/kgK)',(9,-30),rgbcolor='black'))
+            if not(puntos_saturados==[]):
+                show(line(TS)+line(T,rgbcolor='orange')+point(punto,rgbcolor='red',pointsize=20)+point(puntos_saturados,rgbcolor='red',pointsize=20)+line(puntos_saturados,rgbcolor='orange')+text("T("+u"\u00b0"+"C)",(-1,1300),rgbcolor='black')+text('s(kJ/kgK)',(9,-30),rgbcolor='black'))  
+    else:
+        print 'El valor minimo de presion en agua subenfriada es de 5000 KPa y el maximo 50000 KPa'
+	EspacioPT(p,t)):  Es la función que obtiene las propiedades para los estados definidos a través de temperatura y presión en cualquier región, excepto en agua saturada que devuelve los valores de la línea de saturación. Hace llamada a funciones ya descritas, así que su rango de actuación estará condicionado por esas funciones anteriores.
+def EspacioPT(p,t):
+    H=[]
+    tsat=0
+    H=interpolaP_SU(p)
+    if H=='Imposible interpolar para agua saturada':
+        if t>Tcr:
+            print 'Estamos en fluido de alta densidad'
+            return interpola_VAPOR(p,t)
+        else:
+            print 'Estamos en vapor sobrecalentado'
+            return interpola_VAPOR(p,t)    
+    else:
+        tsat=H[1]
+        if t>tsat:
+            print 'Estamos en vapor sobrecalentado'
+            return interpola_VAPOR(p,t)
+        if t==tsat:
+            print 'Estamos en agua saturada'
+            return interpolaP(p)
+        if t<tsat:
+            print 'Estamos en liquido comprimido'
+            return interpola_LIQ(p,t)
+	Funciones que permiten obtener las propiedades de estados definidos a través de una propiedad intensiva (P ó T) y una específica (v,u,h,s). La entrada a la función en ambas es la misma: 2 letras entrecomilladas que identifican las propiedades introducidas, y 2 números que hacen referencia al valor de estas dos propiedades. Las funciones devuelven las propiedades del estado definido, y, si lo hubiese, el error respecto al valor introducido.
++ BuscaValoresVAPOR(Y,y,Q,q): Con las consignas anteriores, permite identificar un estado en la región de vapor sobrecalentado. Las letras mayúsculas hacen referencia, en orden, a la propiedad intensiva y a la específica. Sus respectivas minúsculas son los respectivos valores de cada propiedad.
+def BuscaValoresVAPOR(Y,y,Q,q):
+    if Y=="P":
+        T=[]
+        T=GeneraListaP(y)
+        #Genera los valores para una presion cualquiera en vapor
+        if Q=="v":
+            L=[a[2] for a in T]
+            #coge los volumenes
+            if q>L[0] and q<L[len(L)-1]:
+                #estamos dentro de los valores de los extremos
+                i=0
+                M=[]
+                while i<len(L):
+                    M.append(abs(L[i]-q))
+                    i=i+1
+                l=0
+                F=0
+                C=0
+                H=minimos(M)[1]
+                if len(H)==2:
+                    C=H[0]
+                    F=H[1]
+                else:
+                    C=0
+                    F=0
+                    B=[]
+                    while l<len(M):
+                        if M[l]==minimos(M)[0]:
+                            A.append(M[l])
+                            C=minimos(M)[1][0]
+                        l=l+1
+                if T[C][2]<q or C==0:
+                    F=C+1
+                if T[C][2]>q or C==(len(M)-1):
+                    F=C-1
+                #print T[C]
+                #print T[F]
+                Valor=[y,interpola(T[F][2],q,T[C][2],T[F][1],T[C][1]),q,interpola(T[F][2],q,T[C][2],T[F][3],T[C][3]),interpola(T[F][2],q,T[C][2],T[F][4],T[C][4]),interpola(T[F][2],q,T[C][2],T[F][5],T[C][5])]               
+                return Valor
+                
+            else:
+                return 'Valor fuera de rango'
+        if Q=="u":
+            L=[a[3] for a in T]
+            if q>L[0] and q<L[len(L)-1]:
+                #estamos dentro de los valores de los extremos
+                i=0
+                M=[]
+                while i<len(L):
+                    M.append(abs(L[i]-q))
+                    i=i+1
+                l=0
+                F=0
+                C=0
+                H=minimos(M)[1]
+                if len(H)==2:
+                    C=H[0]
+                    F=H[1]
+                else:
+                    C=0
+                    F=0
+                    B=[]
+                    while l<len(M):
+                        if M[l]==minimos(M)[0]:
+                            A.append(M[l])
+                            C=minimos(M)[1][0]
+                        l=l+1
+                if T[C][3]<q or C==0:
+                    F=C+1
+                if T[C][3]>q or C==(len(M)-1):
+                    F=C-1
+                #print T[C]
+                #print T[F]
+                Valor=[y,interpola(T[F][3],q,T[C][3],T[F][1],T[C][1]),interpola(T[F][3],q,T[C][3],T[F][2],T[C][2]),q,interpola(T[F][3],q,T[C][3],T[F][4],T[C][4]),interpola(T[F][3],q,T[C][3],T[F][5],T[C][5])]               
+                return Valor    
+            else:
+                return 'Valor fuera de rango'
+        if Q=="h":
+            L=[a[4] for a in T]
+            if q>L[0] and q<L[len(L)-1]:
+                i=0
+                M=[]
+                while i<len(L):
+                    M.append(abs(L[i]-q))
+                    i=i+1
+                l=0
+                F=0
+                C=0
+                H=minimos(M)[1]
+                if len(H)==2:
+                    C=H[0]
+                    F=H[1]
+                else:
+                    C=0
+                    F=0
+                    B=[]
+                    while l<len(M):
+                        if M[l]==minimos(M)[0]:
+                            A.append(M[l])
+                            C=minimos(M)[1][0]
+                        l=l+1
+                if T[C][4]<q or C==0:
+                    F=C+1
+                if T[C][4]>q or C==(len(M)-1):
+                    F=C-1                       
+                #print T[C]
+                #print T[F]
+                Valor=[y,interpola(T[F][4],q,T[C][4],T[F][1],T[C][1]),interpola(T[F][4],q,T[C][4],T[F][2],T[C][2]),interpola(T[F][4],q,T[C][4],T[F][3],T[C][3]),q,interpola(T[F][4],q,T[C][4],T[F][5],T[C][5])]               
+                return Valor
+            else:
+                return 'Valor fuera de rango'      
+        if Q=="s":
+            L=[a[5] for a in T]
+            if q>L[0] and q<L[len(L)-1]:
+                i=0
+                M=[]
+                while i<len(L):
+                    M.append(abs(L[i]-q))
+                    i=i+1
+                l=0
+                F=0
+                C=0
+                H=minimos(M)[1]
+                if len(H)==2:
+                    C=H[0]
+                    F=H[1]
+                else:
+                    C=0
+                    F=0
+                    B=[]
+                    while l<len(M):
+                        
+                        if M[l]==minimos(M)[0]:
+                            A.append(M[l])
+                            C=minimos(M)[1][0]
+                            
+                        l=l+1
+                if T[C][5]<q or C==0:
+                    F=C+1
+                if T[C][5]>q or C==(len(M)-1):
+                    F=C-1
+                #print T[C]
+                #print T[F]
+                
+                Valor=[y,interpola(T[F][5],q,T[C][5],T[F][1],T[C][1]),interpola(T[F][5],q,T[C][5],T[F][2],T[C][2]),interpola(T[F][5],q,T[C][5],T[F][3],T[C][3]),interpola(T[F][5],q,T[C][5],T[F][4],T[C][4]),q]               
+                return Valor           
+            else:
+                return 'Valor fuera de rango'
+    if Y=="T":
+        if Q=="v":
+            i=0
+            j=1
+            vector_P1=[10,50,100,200,..,900]
+            vector_P2=[1000,2000,..60000]
+            vector_P=vector_P1+vector_P2
+            M=[]
+            while j<5:
+                 M=[]
+                 E=[]
+                 K=[]
+                 Q=[]
+                 D=[]
+                 i=0
+                 F=0
+                 U=[]
+                 while i<len(vector_P):
+                     if interpola_VAPOR_SU(vector_P[i],y)=='Valor por debajo de la saturacion, Imposible para vapor sobrecalentado':
+                         i=i+1
+                     else:
+                         D=interpola_VAPOR_SU(vector_P[i],y)
+                         M.append([vector_P[i],y,abs(D[2]-q),D[2]])
+                         D=[]
+                         i=i+1
+                 Q=[a[3] for a in M]
+                 K=sorted(Q)        
+                 if q<K[len(K)-1] and q>K[0]:                 
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo1=M[F][0]+M[F][0]/20
+                     extremo2=M[F][0]-M[F][0]/20
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 10:
+                         extremo2=10
+                     if extremo1 > 60000:
+                         extremo1=60000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]
+                 elif q>K[-1]:
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo2=M[F][0]-M[F][0]/10
+                     extremo1=M[F][0]
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 10:
+                         extremo2=10
+                     if extremo1 > 60000:
+                         extremo1=60000    
+                      vector_P=[extremo2,extremo2+intervalo,..extremo1]
+                 elif q<K[0]:
+                 	E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo2=M[F][0]
+                     extremo1=M[F][0]+M[F][0]/10
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 10:
+                         extremo2=10
+                     if extremo1 > 60000:
+                         extremo1=60000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]    
+                 else:
+                     M=[]
+                     break                      
+                 j=j+1
+            if M==[]:
+                return 'Valor fuera de rango'
+            else:
+                dif=M[F][2]
+                desv=(dif/q)*100
+                if desv>5:
+                    return 'Valor fuera de rango'
+                else:    
+                    print 'Desviacion del ' + str(desv) + '%'
+                    return interpola_VAPOR_SU(M[F][0].n(),M[F][1])
+        if Q=="u":
+            i=0
+            j=1
+            vector_P1=[10,50,100,200,..,900]
+            vector_P2=[1000,2000,..60000]
+            vector_P=vector_P1+vector_P2
+            M=[]
+            while j<5:
+                 M=[]
+                 E=[]
+                 Q=[]
+                 K=[]
+                 D=[]
+                 i=0
+                 F=0
+                 U=[]
+                 while i<len(vector_P):
+                     if interpola_VAPOR_SU(vector_P[i],y)=='Valor por debajo de la saturacion, Imposible para vapor sobrecalentado':
+                         i=i+1
+                     else:
+                         D=interpola_VAPOR_SU(vector_P[i],y)
+                         M.append([vector_P[i],y,abs(D[3]-q),D[3]])
+                         D=[]
+                         i=i+1
+                 Q=[a[3] for a in M]
+                 K=sorted(Q)        
+                 if q<K[len(K)-1] and q>K[0]:                 
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo1=M[F][0]+M[F][0]/20
+                     extremo2=M[F][0]-M[F][0]/20
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 10:
+                         extremo2=10
+                     if extremo1 > 60000:
+                         extremo1=60000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]
+
+                 elif q>K[-1]:
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo2=M[F][0]-M[F][0]/10
+                     extremo1=M[F][0]
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 10:
+                         extremo2=10
+                     if extremo1 > 60000:
+                         extremo1=60000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]
+
+                 elif q<K[0]:
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo2=M[F][0]
+                     extremo1=M[F][0]+M[F][0]/10
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 10:
+                         extremo2=10
+                     if extremo1 > 60000:
+                         extremo1=60000    
+                 vector_P=[extremo2,extremo2+intervalo,..extremo1]    
+                 else:
+                     M=[]
+                     break                      
+                 j=j+1
+
+            if M==[]:
+                return 'Valor fuera de rango'
+            else:
+                dif=M[F][2]
+                desv=(dif/q)*100
+                if desv>5:
+                    return 'Valor fuera de rango'
+                else:    
+                    print 'Desviacion del ' + str(desv) + '%'
+                    return interpola_VAPOR_SU(M[F][0].n(),M[F][1])
+                           
+        if Q=="h":
+            i=0
+            j=1
+            vector_P1=[10,50,100,200,..,900]
+            vector_P2=[1000,2000,..60000]
+            vector_P=vector_P1+vector_P2
+            M=[]
+            while j<5:
+                 M=[]
+                 E=[]
+                 Q=[]
+                 D=[]
+                 K=[]
+                 i=0
+                 F=0
+                 U=[]
+                 while i<len(vector_P):
+                     if interpola_VAPOR_SU(vector_P[i],y)=='Valor por debajo de la saturacion, Imposible para vapor sobrecalentado':
+                         i=i+1
+                 else:
+                         D=interpola_VAPOR_SU(vector_P[i],y)
+                         M.append([vector_P[i],y,abs(D[4]-q),D[4]])
+                         D=[]
+                         i=i+1
+                 Q=[a[3] for a in M]
+                 K=sorted(Q)        
+                 if q<K[len(K)-1] and q>K[0]:                 
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo1=M[F][0]+M[F][0]/20
+                     extremo2=M[F][0]-M[F][0]/20
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 10:
+                         extremo2=10
+                     if extremo1 > 60000:
+                         extremo1=60000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]
+
+                 elif q>K[-1]:
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo2=M[F][0]-M[F][0]/10
+                     extremo1=M[F][0]
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 10:
+                         extremo2=10
+                     if extremo1 > 60000:
+                         extremo1=60000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]
+
+                 elif q<K[0]:
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo2=M[F][0]
+                     extremo1=M[F][0]+M[F][0]/10
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 10:
+                         extremo2=10
+                     if extremo1 > 60000:
+                         extremo1=60000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]    
+                 else:
+                     M=[]
+                     break                      
+                 j=j+1
+            if M==[]:
+                return 'Valor fuera de rango'                
+            else:
+                dif=M[F][2]
+                desv=(dif/q)*100
+                if desv>5:
+                    return 'Valor fuera de rango'
+                else:    
+                    print 'Desviacion del ' + str(desv) + '%'
+                    return interpola_VAPOR_SU(M[F][0].n(),M[F][1])           
+        if Q=="s":
+            i=0
+            j=1
+            vector_P1=[10,50,100,200,..,900]
+            vector_P2=[1000,2000,..60000]
+            vector_P=vector_P1+vector_P2
+            M=[]
+            while j<5:
+                 M=[]
+                 E=[]
+                 Q=[]
+                 D=[]
+                 K=[]
+                 i=0
+                 F=0
+                 U=[]
+                 while i<len(vector_P):
+                     if interpola_VAPOR_SU(vector_P[i],y)=='Valor por debajo de la saturacion, Imposible para vapor sobrecalentado':
+                         i=i+1
+                     else:
+                         D=interpola_VAPOR_SU(vector_P[i],y)
+                         M.append([vector_P[i],y,abs(D[5]-q),D[5]])
+                         D=[]
+                 i=i+1
+                 Q=[a[3] for a in M]
+                 K=sorted(Q)        
+                 if q<K[len(K)-1] and q>K[0]:                 
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo1=M[F][0]+M[F][0]/20
+                     extremo2=M[F][0]-M[F][0]/20
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 10:
+                         extremo2=10
+                     if extremo1 > 60000:
+                         extremo1=60000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]
+
+                 elif q>K[-1]:
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo2=M[F][0]-M[F][0]/10
+                     extremo1=M[F][0]
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 10:
+                         extremo2=10
+                     if extremo1 > 60000:
+                         extremo1=60000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]
+
+                 elif q<K[0]:
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo2=M[F][0]
+                     extremo1=M[F][0]+M[F][0]/10
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 10:
+                         extremo2=10
+                     if extremo1 > 60000:
+                         extremo1=60000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]    
+                 else:
+                     M=[]
+                     break                      
+                 j=j+1
+            if M==[]:
+                return 'Valor fuera de rango'
+            else:
+                dif=M[F][2]
+                desv=(dif/q)*100
+                if desv>5:
+                    return 'Valor fuera de rango'
+                else:    
+                    print 'Desviacion del ' + str(desv) + '%'
+                    return interpola_VAPOR_SU(M[F][0].n(),M[F][1])
++ BuscaValoresSUB(Y,y,Q,q): Con las consignas anteriores, permite identificar un estado en la región de agua subenfriada. Las letras mayúsculas hacen referencia, en orden, a la propiedad intensiva y a la específica. Sus respectivas minúsculas son los respectivos valores de cada propiedad.
+def BuscaValoresSUB(Y,y,Q,q):
+    vector_P=[]
+    if Y=="P":
+        T=GeneraListaP_SUB(y)
+        if Q=="v":
+            L=[a[2] for a in T]
+            if q>L[0] and q<L[len(L)-1]:
+                i=0
+                M=[]
+                while i<len(L):
+                    M.append(abs(L[i]-q))
+                    i=i+1
+                l=0
+                F=0
+                C=0
+                H=minimos(M)[1]
+                if len(H)==2:
+                    C=H[0]
+                    F=H[1]
+                else:
+                    C=0
+                    F=0
+                    B=[]
+                    while l<len(M):
+                        if M[l]==minimos(M)[0]:
+                            A.append(M[l])
+                            C=minimos(M)[1][0]
+                        l=l+1
+                if T[C]<q or C==0:
+                    F=C+1
+                if T[C]>q or C==(len(M)-1):
+                    F=C-1        
+                #print T[C]
+                #print T[F]
+                Valor=[y,interpola(T[F][2],q,T[C][2],T[F][1],T[C][1]),q,interpola(T[F][2],q,T[C][2],T[F][3],T[C][3]),interpola(T[F][2],q,T[C][2],T[F][4],T[C][4]),interpola(T[F][2],q,T[C][2],T[F][5],T[C][5])]               
+                return Valor
+                
+            else:
+                return 'Valor fuera de rango'
+        if Q=="u":
+            L=[a[3] for a in T]
+            if q>L[0] and q<L[len(L)-1]:
+                i=0
+                M=[]
+                while i<len(L):
+                    M.append(abs(L[i]-q))
+                    i=i+1
+                l=0
+                F=0
+                C=0
+                H=minimos(M)[1]
+                if len(H)==2:
+                    C=H[0]
+                    F=H[1]
+                else:
+                    C=0
+                    F=0
+                    B=[]
+                    while l<len(M):
+                        
+                        if M[l]==minimos(M)[0]:
+                            A.append(M[l])
+                            C=minimos(M)[1][0]
+                        l=l+1
+                if T[C]<q or C==0:
+                    F=C+1
+                if T[C]>q or C==(len(M)-1):
+                    F=C-1
+                #print T[C]
+                #print T[F]
+                Valor=[y,interpola(T[F][3],q,T[C][3],T[F][1],T[C][1]),interpola(T[F][3],q,T[C][3],T[F][2],T[C][2]),q,interpola(T[F][3],q,T[C][3],T[F][4],T[C][4]),interpola(T[F][3],q,T[C][3],T[F][5],T[C][5])]               
+                return Valor
+            else:
+                return 'Valor fuera de rango'             
+        if Q=="h":
+            L=[a[4] for a in T]
+            if q>L[0] and q<L[len(L)-1]:
+                i=0
+                M=[]
+                while i<len(L):
+                    M.append(abs(L[i]-q))
+                    i=i+1
+                l=0
+                F=0
+                C=0
+                H=minimos(M)[1]
+                if len(H)==2:
+                    C=H[0]
+                    F=H[1]
+                else:
+                    C=0
+                    F=0
+                    B=[]
+                    while l<len(M):
+                        
+                        if M[l]==minimos(M)[0]:
+                            A.append(M[l])
+                            C=minimos(M)[1][0]
+                        l=l+1
+                if T[C]<q or C==0:
+                    F=C+1
+                if T[C]>q or C==(len(M)-1):
+                    F=C-1
+                #print T[C]
+                #print T[F]
+                Valor=[y,interpola(T[F][4],q,T[C][4],T[F][1],T[C][1]),interpola(T[F][4],q,T[C][4],T[F][2],T[C][2]),interpola(T[F][4],q,T[C][4],T[F][3],T[C][3]),q,interpola(T[F][4],q,T[C][4],T[F][5],T[C][5])]               
+                return Valor
+            else:
+                return 'Valor fuera de rango'      
+        if Q=="s":
+            L=[a[5] for a in T]
+            if q>L[0] and q<L[len(L)-1]:
+                i=0
+                M=[]
+                while i<len(L):
+                    M.append(abs(L[i]-q))
+                    i=i+1
+                l=0
+                F=0
+                C=0
+                H=minimos(M)[1]
+                if len(H)==2:
+                    C=H[0]
+                    F=H[1]
+                else:
+                    C=0
+                    F=0
+                    B=[]
+                    while l<len(M):
+                        
+                        if M[l]==minimos(M)[0]:
+                            A.append(M[l])
+                            C=minimos(M)[1][0]
+                        l=l+1
+                if T[C]<q or C==0:
+                    F=C+1
+                if T[C]>q or C==(len(M)-1):
+                    F=C-1
+                #print T[C]
+                #print T[F]
+                Valor=[y,interpola(T[F][5],q,T[C][5],T[F][1],T[C][1]),interpola(T[F][5],q,T[C][5],T[F][2],T[C][2]),interpola(T[F][5],q,T[C][5],T[F][3],T[C][3]),interpola(T[F][5],q,T[C][5],T[F][4],T[C][4]),q]               
+                return Valor           
+            else:
+                return 'Valor fuera de rango'
+    if Y=="T":
+        if Q=="v":
+            i=0
+            j=0
+            vector_P=[5000,6000,..50000]
+            M=[]
+            while j<5:
+                 M=[]
+                 E=[]
+                 Q=[]
+                 D=[]
+                 i=0
+                 F=0
+                 U=[]
+                 while i<len(vector_P):
+                     if interpola_LIQ_SU(vector_P[i],y)=='Valor por encima de la saturacion, Imposible para agua subenfriada':
+                         i=i+1
+                     else:
+                         D=interpola_LIQ_SU(vector_P[i],y)
+                         M.append([vector_P[i],y,abs(D[2]-q),D[2]])
+                 D=[]
+                 i=i+1
+                 Q=[a[3] for a in M]
+                 K=sorted(Q)        
+                 if q<K[len(K)-1] and q>K[0]:                 
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo1=M[F][0]+M[F][0]/20
+                     extremo2=M[F][0]-M[F][0]/20
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 5000:
+                         extremo2=5000
+                     if extremo1 > 50000:
+                         extremo1=50000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]
+
+                 elif q>K[-1]:
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo2=M[F][0]-M[F][0]/10
+                     extremo1=M[F][0]
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 5000:
+                         extremo2=5000
+                     if extremo1 > 50000:
+                         extremo1=50000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]
+
+                 elif q<K[0]:
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo2=M[F][0]
+                     extremo1=M[F][0]+M[F][0]/10
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 5000:
+                         extremo2=5000
+                     if extremo1 > 50000:
+                         extremo1=50000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]    
+                 else:
+                     M=[]
+                     break                      
+                 j=j+1
+            if M==[]:
+                return 'Valor fuera de rango'
+            else:
+                dif=M[F][2]
+                desv=(dif/q)*100
+                if desv>5:
+                    return 'Valor fuera de rango'
+                else:    
+                    print 'Desviacion del ' + str(desv) + '%'
+                    return interpola_LIQ_SU(M[F][0].n(),M[F][1])                     
+
+        if Q=="u":
+            i=0
+            j=0
+            vector_P=[5000,6000,..50000]
+            M=[]
+            while j<5:
+                 M=[]
+                 E=[]
+                 Q=[]
+                 D=[]
+                 i=0
+                 F=0
+                 U=[]
+                 while i<len(vector_P):
+                     if interpola_LIQ_SU(vector_P[i],y)=='Valor por encima de la saturacion, Imposible para agua subenfriada':
+                         i=i+1
+                 else:
+                         D=interpola_LIQ_SU(vector_P[i],y)
+                         M.append([vector_P[i],y,abs(D[3]-q),D[3]])
+                         D=[]
+                         i=i+1
+                 Q=[a[3] for a in M]
+                 K=sorted(Q)        
+                 if q<K[len(K)-1] and q>K[0]:                 
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo1=M[F][0]+M[F][0]/20
+                     extremo2=M[F][0]-M[F][0]/20
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 5000:
+                         extremo2=5000
+                     if extremo1 > 50000:
+                         extremo1=50000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]
+
+                 elif q>K[-1]:
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo2=M[F][0]-M[F][0]/10
+                     extremo1=M[F][0]
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 5000:
+                         extremo2=5000
+                     if extremo1 > 50000:
+                         extremo1=50000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]
+                 elif q<K[0]:
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo2=M[F][0]
+                     extremo1=M[F][0]+M[F][0]/10
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 5000:
+                         extremo2=5000
+                     if extremo1 > 50000:
+                         extremo1=50000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]    
+                 else:
+                     M=[]
+                     break                      
+            j=j+1
+            if M==[]:
+                return 'Valor fuera de rango'
+            else:
+                dif=M[F][2]
+                desv=(dif/q)*100
+                if desv>5:
+                    return 'Valor fuera de rango'
+                else:    
+                    print 'Desviacion del ' + str(desv) + '%'
+                    return interpola_LIQ_SU(M[F][0].n(),M[F][1])               
+        if Q=="h":
+            i=0
+            j=0
+            vector_P=[5000,6000,..50000]
+            M=[]
+            while j<5:
+                 M=[]
+                 E=[]
+                 Q=[]
+                 D=[]
+                 i=0
+                 F=0
+                 U=[]
+                 while i<len(vector_P):
+                     if interpola_LIQ_SU(vector_P[i],y)=='Valor por encima de la saturacion, Imposible para agua subenfriada':
+                         i=i+1
+                 else:
+                         D=interpola_LIQ_SU(vector_P[i],y)
+                         M.append([vector_P[i],y,abs(D[4]-q),D[4]])
+                         D=[]
+                         i=i+1
+                 Q=[a[3] for a in M]
+                 K=sorted(Q)        
+                 if q<K[len(K)-1] and q>K[0]:                 
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo1=M[F][0]+M[F][0]/20
+                     extremo2=M[F][0]-M[F][0]/20
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 5000:
+                         extremo2=5000
+                     if extremo1 > 50000:
+                         extremo1=50000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]
+                 elif q>K[-1]:
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo2=M[F][0]-M[F][0]/10
+                     extremo1=M[F][0]
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 5000:
+                         extremo2=5000
+                     if extremo1 > 50000:
+                         extremo1=50000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]
+                 elif q<K[0]:
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo2=M[F][0]
+                     extremo1=M[F][0]+M[F][0]/10
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 5000:
+                         extremo2=5000
+                     if extremo1 > 50000:
+                         extremo1=50000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]    
+                 else:
+                     M=[]
+                     break                      
+                 j=j+1
+            if M==[]:
+                return 'Valor fuera de rango'
+            else:
+                dif=M[F][2]
+                desv=(dif/q)*100
+                if desv>5:
+                    return 'Valor fuera de rango'
+                else:    
+                    print 'Desviacion del ' + str(desv) + '%'
+                    return interpola_LIQ_SU(M[F][0].n(),M[F][1])
+        if Q=="s":
+            i=0
+            j=0
+            vector_P=[5000,6000,..50000]
+            M=[]
+            while j<5:
+                 M=[]
+                 E=[]
+                 Q=[]
+                 D=[]
+                 i=0
+                 F=0
+                 U=[]
+                 while i<len(vector_P):
+                     if interpola_LIQ_SU(vector_P[i],y)=='Valor por encima de la saturacion, Imposible para agua subenfriada':
+                         i=i+1
+                 else:
+                         D=interpola_LIQ_SU(vector_P[i],y)
+                         M.append([vector_P[i],y,abs(D[5]-q),D[5]])
+                         D=[]
+                         i=i+1
+                 Q=[a[3] for a in M]
+                 K=sorted(Q)        
+                 if q<K[len(K)-1] and q>K[0]:                 
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo1=M[F][0]+M[F][0]/20
+                     extremo2=M[F][0]-M[F][0]/20
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 5000:
+                         extremo2=5000
+                     if extremo1 > 50000:
+                         extremo1=50000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]
+                 elif q>K[-1]:
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo2=M[F][0]-M[F][0]/10
+                     extremo1=M[F][0]
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 5000:
+                         extremo2=5000
+                     if extremo1 > 50000:
+                         extremo1=50000    
+                     vector_P=[extremo2,extremo2+intervalo,..extremo1]
+                 elif q<K[0]:
+                     E=[a[2] for a in M]    
+                     U=minimos(E)
+                     F=U[1][0]
+                     extremo2=M[F][0]
+                     extremo1=M[F][0]+M[F][0]/10
+                     intervalo=(extremo1-extremo2)/20
+                     if extremo2 < 5000:
+                         extremo2=5000
+                     if extremo1 > 50000:
+                         extremo1=50000    
+                      vector_P=[extremo2,extremo2+intervalo,..extremo1]    
+                 else:
+                     M=[]
+                     break                      
+                 j=j+1
+            if M==[]:
+                return 'Valor fuera de rango'
+            else:
+                dif=M[F][2]
+                desv=(dif/q)*100
+                if desv>5:
+                    return 'Valor fuera de rango'
+                else:    
+                    print 'Desviacion del ' + str(desv) + '%'
+                    return interpola_LIQ_SU(M[F][0].n(),M[F][1])
+	Estado(Y,y,Q,q): Es una función que permite identificar un estado a través de dos propiedades intensivas, o una y otra específica, independientemente de la región en la que se ubique. Tiene la misma estructura que BuscaValores. Es una concatenación de todas las posibilidades vistas hasta ahora, y permite también la representación del estado en un diagrama T-s.
+def Estado(Y,y,Q,q):
+    if Y=="T":
+        H=[]
+        H=interpolaT_SU(y)
+        if Q=="v":
+            if not(H=='Imposible interpolar para agua saturada'):
+                if y<=Tcr:
+                    if q<H[2]:
+                        W=[]
+                        W=BuscaValoresSUB("T",y,"v",q)
+                        print 'Estamos en agua subenfriada'
+                        return interpola_LIQ(W[0],y)
+                    if q>H[2] and q<H[3]:
+                        X=[]
+                        X=interpola(H[2],q,H[3],0,1)
+                        print 'El titulo es de ' + str(X)
+                        print 'Estamos en agua saturada'
+                        return interpolaDentroT(y,X)
+                    if q>H[3]:
+                        W=[]
+                        W=BuscaValoresVAPOR("T",y,"v",q)
+                        print 'Estamos en vapor sobrecalentado'
+                        return interpola_VAPOR(W[0],y)            
+            else:
+                if y>Tcr:
+                    P=[]
+                    P=BuscaValoresVAPOR("T",y,"v",q)
+                    if P[0]>Pcr:
+                        print 'Estamos en fluido de alta densidad'
+                    else:
+                        print 'Estamos en vapor sobrecalentado'    
+                    return interpola_VAPOR(P[0],y)
+        if Q=="u":
+            if not(H=='Imposible interpolar para agua saturada'):
+                if y<=Tcr:
+                    if q<H[3]:
+                        W=[]
+                        W=BuscaValoresSUB("T",y,"u",q)
+                        print 'Estamos en agua subenfriada'
+                        return interpola_LIQ(W[0],y)
+                    if q>H[3] and q<H[5]:
+                        X=[]
+                        X=interpola(H[3],q,H[5],0,1)
+                        print 'El titulo es de ' + str(X)
+                        print 'Estamos en agua saturada'
+                        return interpolaDentroT(y,X)
+                    if q>H[5]:
+                        W=[]
+                        W=BuscaValoresVAPOR("T",y,"u",q)
+                        print 'Estamos en vapor sobrecalentado'
+                        return interpola_VAPOR(W[0],y.n())            
+            else:
+                if y>Tcr:
+                    P=[]
+                    P=BuscaValoresVAPOR("T",y,"u",q)
+                    if P[0]>Pcr:
+                        print 'Estamos en fluido de alta densidad'
+                    else:
+                        print 'Estamos en vapor sobrecalentado'    
+                    return interpola_VAPOR(P[0],y.n())
+        if Q=="h":
+            if not(H=='Imposible interpolar para agua saturada'):
+                if y<=Tcr:
+                    if q<H[7]:
+                        W=[]
+                        W=BuscaValoresSUB("T",y,"h",q)
+                        print 'Estamos en agua subenfriada'
+                        return interpola_LIQ(W[0],y)
+                    if q>H[7] and q<H[9]:
+                        X=[]
+                        X=interpola(H[7],q,H[9],0,1)
+                        print 'El titulo es de ' + str(X)
+                        print 'Estamos en agua saturada'
+                        return interpolaDentroT(y,X)
+                    if q>H[5]:
+                        W=[]
+                        W=BuscaValoresVAPOR("T",y,"h",q)
+                        print 'Estamos en vapor sobrecalentado'
+                        return interpola_VAPOR(W[0],y)            
+            else:
+                if y>Tcr:
+                    P=[]
+                    P=BuscaValoresVAPOR("T",y,"h",q)
+                    if P[0]>Pcr:
+                        print 'Estamos en fluido de alta densidad'
+                    else:
+                        print 'Estamos en vapor sobrecalentado'    
+                    return interpola_VAPOR(P[0],y)
+        if Q=="s":
+            if not(H=='Imposible interpolar para agua saturada'):
+                if y<=Tcr:
+                    if q<H[10]:
+                        W=[]
+                        W=BuscaValoresSUB("T",y,"s",q)
+                        print 'Estamos en agua subenfriada'
+                        return interpola_LIQ(W[0],y)
+                    if q>H[10] and q<H[12]:
+                        X=[]
+                        X=interpola(H[10],q,H[12],0,1)
+                        print 'El titulo es de ' + str(X)
+                        print 'Estamos en agua saturada'
+                        return interpolaDentroT(y,X)
+                    if q>H[12]:
+                        W=[]
+                        W=BuscaValoresVAPOR("T",y,"s",q)
+                        print 'Estamos en vapor sobrecalentado'
+                        return interpola_VAPOR(W[0],y)            
+            else:
+                if y>Tcr:
+                    P=[]
+                    P=BuscaValoresVAPOR("T",y,"s",q)
+                    if P[0]>Pcr:
+                        print 'Estamos en fluido de alta densidad'
+                    else:
+                        print 'Estamos en vapor sobrecalentado'    
+                    return interpola_VAPOR(P[0],y)
+        if Q=="P":
+            return EspacioPT(q,y)
+        if Q=="X":
+            return interpolaDentroT(y,q)
+    if Y=="P":
+        H=[]
+        H=interpolaP_SU(y)
+        if Q=="v":
+            if not(H=='Imposible interpolar para agua saturada'):
+                if y<=Pcr:
+                    if q<H[2]:
+                        W=[]
+                        W=BuscaValoresSUB("P",y,"v",q)
+                        print 'Estamos en agua subenfriada'
+                        return interpola_LIQ(y,W[1])
+                    if q>H[2] and q<H[3]:
+                        X=[]
+                        X=interpola(H[2],q,H[3],0,1)
+                        print 'El titulo es de ' + str(X)
+                        print 'Estamos en agua saturada'
+                        return interpolaDentroP(y,X)
+                    if q>H[3]:
+                        W=[]
+                        W=BuscaValoresVAPOR("P",y,"v",q)
+                        print 'Estamos en vapor sobrecalentado'      
+                        return interpola_VAPOR(y,W[1])  
+            else:
+                if y>Pcr:
+                    P=[]
+                    P=BuscaValoresVAPOR("P",y,"v",q)
+                    if P[1]>Tcr:
+                        print 'Estamos en fluido de alta densidad'
+                    else:
+                        print 'Estamos en vapor sobrecalentado'    
+                    return interpola_VAPOR(y,P[1])                            
+        if Q=="u":
+            if not(H=='Imposible interpolar para agua saturada'):
+                if y<=Pcr:
+                    if q<H[4]:
+                        W=[]
+                        W=BuscaValoresSUB("P",y,"u",q)
+                        print 'Estamos en agua subenfriada'
+                        return interpola_LIQ(y,W[1])
+                    if q>H[4] and q<H[6]:
+                        X=[]
+                        X=interpola(H[4],q,H[6],0,1)
+                        print 'El titulo es de ' + str(X)
+                        print 'Estamos en agua saturada'
+                        return interpolaDentroP(y,X)
+                    if q>H[6]:
+                        W=[]
+                        W=BuscaValoresVAPOR("P",y,"u",q)
+                        print 'Estamos en vapor sobrecalentado'      
+                        return interpola_VAPOR(y,W[1])  
+            else:
+                if y>Pcr:
+                    P=[]
+                    P=BuscaValoresVAPOR("P",y,"u",q)
+                    if P[1]>Tcr:
+                        print 'Estamos en fluido de alta densidad'
+                    else:
+                        print 'Estamos en vapor sobrecalentado'    
+                    return interpola_VAPOR(y,P[1])
+        if Q=="h":
+            if not(H=='Imposible interpolar para agua saturada'):
+                if y<=Pcr:
+                    if q<H[7]:
+                        W=[]
+                        W=BuscaValoresSUB("P",y,"h",q)
+                        print 'Estamos en agua subenfriada'
+                        return interpola_LIQ(y,W[1])
+                    if q>H[7] and q<H[9]:
+                        X=[]
+                        X=interpola(H[7],q,H[9],0,1)
+                        print 'El titulo es de ' + str(X)
+                        print 'Estamos en agua saturada'
+                        return interpolaDentroP(y,X)
+                    if q>H[9]:
+                        W=[]
+                        W=BuscaValoresVAPOR("P",y,"h",q)
+                        print 'Estamos en vapor sobrecalentado'      
+                        return interpola_VAPOR(y,W[1])  
+            else:
+                if y>Pcr:
+                    P=[]
+                    P=BuscaValoresVAPOR("P",y,"h",q)
+                    if P[1]>Tcr:
+                        print 'Estamos en fluido de alta densidad'
+                    else:
+                        print 'Estamos en vapor sobrecalentado'    
+                    return interpola_VAPOR(y,P[1])
+        if Q=="s":
+            if not(H=='Imposible interpolar para agua saturada'):
+                if y<=Pcr:
+                    if q<H[10]:
+                        W=[]
+                        W=BuscaValoresSUB("P",y,"s",q)
+                        print 'Estamos en agua subenfriada'
+                        return interpola_LIQ(y,W[1])
+                    if q>H[10] and q<H[12]:
+                        X=[]
+                        X=interpola(H[10],q,H[12],0,1)
+                        print 'El titulo es de ' + str(X)
+                        print 'Estamos en agua saturada'
+                        return interpolaDentroP(y,X)
+                    if q>H[12]:
+                        W=[]
+                        W=BuscaValoresVAPOR("P",y,"s",q)
+                        print 'Estamos en vapor sobrecalentado'     
+                        return interpola_VAPOR(y,W[1])  
+            else:
+                if y>Pcr:
+                    P=[]
+                    P=BuscaValoresVAPOR("P",y,"s",q)
+                    if P[1]>Tcr:
+                        print 'Estamos en fluido de alta densidad'
+                    else:
+                        print 'Estamos en vapor sobrecalentado'    
+                    return interpola_VAPOR(y,P[1])
+        if Q=="T":
+            return EspacioPT(y,q)
+        if Q=="X":
+            return interpolaDentroP(y,q)   
+	Proceso1(Y,y,Q,q,R,W,w): Es la función que permite la representación de trayectorias para una sucesión de estados que comparten una característica común, en este caso, mantener una propiedad constante. Mediante la entrada se define el estado inicial (4 primeros inputs), el parámetro a mantener constante (R), y el estado final (W,w). En el Anexo 4 se podrán encontrar imágenes de esta función.
+def Proceso1(Y,y,Q,q,R,W,w):
+    Estado1=[]
+    Punto1=[]
+    T=[]
+    Punto2=[]
+    iso=[]
+    Estado2=[]
+    TS=zip(vector_representacion_entropia,vector_representacion_temp)
+    Estado1=Estado_SU(Y,y,Q,q)
+    if Estado1[0]=='Valor fuera de rango':
+        return 'Primer estado imposible de identificar'
+    Punto1=(Estado1[0][5],Estado1[0][1])
+    
+    if R=="P":
+        Estado2=Estado_SU(R,Estado1[0][0],W,w)
+        if Estado2[0]=='Valor fuera de rango':
+            return 'Segundo estado imposible de identificar'
+        else:
+            Punto2=(Estado2[0][5],Estado2[0][1])
+            Estados_Isobara1=GeneraPuntosDiagramaTS(Estado1[0][0])
+            PuntosT1=[a[1] for a in Estados_Isobara1]
+            PuntosS1=[a[5] for a in Estados_Isobara1]
+            isobara1=zip(PuntosS1,PuntosT1)
+
+            Estados_Isobara2=GeneraPuntosDiagramaTS(Estado2[0][0])                
+              
+            E=[]
+            E=[a[5] for a in Estados_Isobara2]
+            
+            i=0
+            while i<len(E):
+                if Estado1[0][5]>E[i]:
+                    i=i+1
+                else:
+                    break
+            e=0
+            while e<len(E):
+                if Estado2[0][5]>E[e]:
+                    e=e+1
+                else:
+                    break
+            iso=[Estado1[0]]+Estados_Isobara2[i:e]+[Estado2[0]]            
+               
+            PuntosT2=[a[1] for a in iso]
+            PuntosS2=[a[5] for a in iso]
+            isobara2=zip(PuntosS2,PuntosT2)             
+            show(line(TS)+point(Punto1,rgbcolor='red')+point(Punto2,rgbcolor='red')+text('1',(Punto1[0],Punto1[1]+30))+text('2',(Punto2[0],Punto2[1]+30))+line(isobara1,rgbcolor='orange')+line(isobara2,rgbcolor='black')+text("T("+u"\u00b0"+"C)",(-1,1300),rgbcolor='black')+text('s(kJ/kgK)',(11,-30),rgbcolor='black'))        
+            return Estado2
+    
+    
+    if R=="T":
+        Estado2=Estado_SU(W,w,R,Estado1[0][1])
+        if Estado2[0]=='Valor fuera de rango':
+            return 'Segundo estado imposible de identificar'
+        else:
+            Punto2=(Estado2[0][5],Estado2[0][1])
+            Estados_Isobara1=GeneraPuntosDiagramaTS(Estado1[0][0])
+            PuntosT1=[a[1] for a in Estados_Isobara1]
+            PuntosS1=[a[5] for a in Estados_Isobara1]
+            isobara1=zip(PuntosS1,PuntosT1)
+                
+            Estados_Isobara2=GeneraPuntosDiagramaTS(Estado2[0][0])
+            PuntosT2=[a[1] for a in Estados_Isobara2]
+            PuntosS2=[a[5] for a in Estados_Isobara2]
+            isobara2=zip(PuntosS2,PuntosT2)  
+            
+            iso=[Punto1,Punto2]
+                      
+            show(line(TS)+point(Punto1,rgbcolor='red')+point(Punto2,rgbcolor='red')+text('1',(Punto1[0],Punto1[1]+30))+text('2',(Punto2[0],Punto2[1]+30))+line(isobara1,rgbcolor='orange')+line(isobara2,rgbcolor='orange')+text("T("+u"\u00b0"+"C)",(-1,1300),rgbcolor='black')+text('s(kJ/kgK)',(11,-30),rgbcolor='black')+line(iso,rgbcolor='black'))
+            return Estado2    
+    
+    if R=="v":
+        Estado2=Estado_SU(W,w,R,Estado1[0][2])
+        if Estado2[0]=='Valor fuera de rango':
+            return 'Segundo estado imposible de identificar'
+        else:
+            if W=="P":
+                extremo1=Estado1[0][0]
+                extremo2=Estado2[0][0]
+                intervalo=(extremo2-extremo1)/50
+                vectorP=[extremo1,extremo1+intervalo,..,extremo2]
+                i=0
+                M=[]
+                D=[]
+                while i<len(vectorP):
+                    M.append(Estado_SU("P",vectorP[i],R,Estado1[0][2]))
+                    if M[i][0]=='Valor fuera de rango':
+                        i=i+1
+                    else:
+                        D.append(M[i])    
+                        i=i+1
+                H=[]
+                H=[a[0] for a in D]
+                C=[]
+                C=[a[1] for a in H]
+                T=[]
+                T=[a[5] for a in H]   
+                iso=zip(T,C)
+                Punto2=(Estado2[0][5],Estado2[0][1])
+                
+                Estados_Isobara1=GeneraPuntosDiagramaTS(Estado1[0][0])
+                PuntosT1=[a[1] for a in Estados_Isobara1]
+                PuntosS1=[a[5] for a in Estados_Isobara1]
+                isobara1=zip(PuntosS1,PuntosT1)
+                
+                Estados_Isobara2=GeneraPuntosDiagramaTS(Estado2[0][0])
+                PuntosT2=[a[1] for a in Estados_Isobara2]
+                PuntosS2=[a[5] for a in Estados_Isobara2]
+                isobara2=zip(PuntosS2,PuntosT2)
+                
+                show(line(TS)+point(Punto1,rgbcolor='red')+point(Punto2,rgbcolor='red')+text('1',(Punto1[0],Punto1[1]+30))+text('2',(Punto2[0],Punto2[1]+30))+line(iso,rgbcolor='black')+line(isobara1,rgbcolor='orange')+line(isobara2,rgbcolor='orange')+text("T("+u"\u00b0"+"C)",(-1,1300),rgbcolor='black')+text('s(kJ/kgK)',(11,-30),rgbcolor='black'))
+                return Estado2
+        
+    if R=="u":
+        Estado2=Estado_SU(W,w,R,Estado1[0][3])
+        if Estado2[0]=='Valor fuera de rango':
+            return 'Segundo estado imposible de identificar'
+        else:
+            if W=="P":
+                extremo1=Estado1[0][0]
+                extremo2=Estado2[0][0]
+                intervalo=(extremo2-extremo1)/50
+                vectorP=[extremo1,extremo1+intervalo,..,extremo2]
+                i=0
+                M=[]
+                D=[]
+                while i<len(vectorP):
+                    M.append(Estado_SU("P",vectorP[i],R,Estado1[0][3]))
+                    if M[i][0]=='Valor fuera de rango':
+                        i=i+1
+                    else:
+                        D.append(M[i])    
+                        i=i+1
+                H=[]
+                H=[a[0] for a in D]
+                C=[]
+                C=[a[1] for a in H]
+                T=[]
+                T=[a[5] for a in H]   
+                iso=zip(T,C)
+                Punto2=(Estado2[0][5],Estado2[0][1])
+                
+                Estados_Isobara1=GeneraPuntosDiagramaTS(Estado1[0][0])
+                PuntosT1=[a[1] for a in Estados_Isobara1]
+                PuntosS1=[a[5] for a in Estados_Isobara1]
+                isobara1=zip(PuntosS1,PuntosT1)
+                
+                Estados_Isobara2=GeneraPuntosDiagramaTS(Estado2[0][0])
+                PuntosT2=[a[1] for a in Estados_Isobara2]
+                PuntosS2=[a[5] for a in Estados_Isobara2]
+                isobara2=zip(PuntosS2,PuntosT2)
+                
+                show(line(TS)+point(Punto1,rgbcolor='red')+point(Punto2,rgbcolor='red')+text('1',(Punto1[0],Punto1[1]+30))+text('2',(Punto2[0],Punto2[1]+30))+line(iso,rgbcolor='black')+line(isobara1,rgbcolor='orange')+line(isobara2,rgbcolor='orange')+text("T("+u"\u00b0"+"C)",(-1,1300),rgbcolor='black')+text('s(kJ/kgK)',(11,-30),rgbcolor='black'))
+                return Estado2               
+
+    if R=="h":
+        Estado2=Estado_SU(W,w,R,Estado1[0][4])
+        if Estado2[0]=='Valor fuera de rango':
+            return 'Segundo estado imposible de identificar'
+        else:
+            if W=="P":
+                extremo1=Estado1[0][0]
+                extremo2=Estado2[0][0]
+                intervalo=(extremo2-extremo1)/50
+                vectorP=[extremo1,extremo1+intervalo,..,extremo2]
+                i=0
+                M=[]
+                D=[]
+                while i<len(vectorP):
+                    M.append(Estado_SU("P",vectorP[i],R,Estado1[0][4]))
+                    if M[i][0]=='Valor fuera de rango':
+                        i=i+1
+                    else:
+                        D.append(M[i])    
+                        i=i+1
+                H=[]
+                H=[a[0] for a in D]
+                C=[]
+                C=[a[1] for a in H]
+                T=[]
+                T=[a[5] for a in H]   
+                iso=zip(T,C)
+                Punto2=(Estado2[0][5],Estado2[0][1])
+                
+                Estados_Isobara1=GeneraPuntosDiagramaTS(Estado1[0][0])
+                PuntosT1=[a[1] for a in Estados_Isobara1]
+                PuntosS1=[a[5] for a in Estados_Isobara1]
+                isobara1=zip(PuntosS1,PuntosT1)
+                
+                Estados_Isobara2=GeneraPuntosDiagramaTS(Estado2[0][0])
+                PuntosT2=[a[1] for a in Estados_Isobara2]
+                PuntosS2=[a[5] for a in Estados_Isobara2]
+                isobara2=zip(PuntosS2,PuntosT2)
+                
+                show(line(TS)+point(Punto1,rgbcolor='red')+point(Punto2,rgbcolor='red')+text('1',(Punto1[0],Punto1[1]+30))+text('2',(Punto2[0],Punto2[1]+30))+line(iso,rgbcolor='black')+line(isobara1,rgbcolor='orange')+line(isobara2,rgbcolor='orange')+text("T("+u"\u00b0"+"C)",(-1,1300),rgbcolor='black')+text('s(kJ/kgK)',(11,-30),rgbcolor='black'))
+                return Estado2
+        
+    if R=="s":
+        Estado2=Estado_SU(W,w,R,Estado1[0][5])
+        if Estado2[0]=='Valor fuera de rango':
+            return 'Segundo estado imposible de identificar'
+        else:
+            if W=="P":
+                extremo1=Estado1[0][0]
+                extremo2=Estado2[0][0]
+                intervalo=(extremo2-extremo1)/50
+                vectorP=[extremo1,extremo1+intervalo,..,extremo2]
+                i=0
+                M=[]
+                D=[]
+                while i<len(vectorP):
+                    M.append(Estado_SU("P",vectorP[i],R,Estado1[0][5]))
+                    if M[i][0]=='Valor fuera de rango':
+                        i=i+1
+                    else:
+                        D.append(M[i])    
+                        i=i+1
+                H=[]
+                H=[a[0] for a in D]
+                C=[]
+                C=[a[1] for a in H]
+                T=[]
+                T=[a[5] for a in H]   
+                iso=zip(T,C)
+                Punto2=(Estado2[0][5],Estado2[0][1])
+                
+                Estados_Isobara1=GeneraPuntosDiagramaTS(Estado1[0][0])
+                PuntosT1=[a[1] for a in Estados_Isobara1]
+                PuntosS1=[a[5] for a in Estados_Isobara1]
+                isobara1=zip(PuntosS1,PuntosT1)
+                
+                Estados_Isobara2=GeneraPuntosDiagramaTS(Estado2[0][0])
+                PuntosT2=[a[1] for a in Estados_Isobara2]
+                PuntosS2=[a[5] for a in Estados_Isobara2]
+                isobara2=zip(PuntosS2,PuntosT2)
+                
+                show(line(TS)+point(Punto1,rgbcolor='red')+point(Punto2,rgbcolor='red')+text('1',(Punto1[0],Punto1[1]+30))+text('2',(Punto2[0],Punto2[1]+30))+line(iso,rgbcolor='black')+line(isobara1,rgbcolor='orange')+line(isobara2,rgbcolor='orange')+text("T("+u"\u00b0"+"C)",(-1,1300),rgbcolor='black')+text('s(kJ/kgK)',(11,-30),rgbcolor='black'))
+                return Estado2
+	Curvas_ISO_Rankine(Y,y,Q,q,R,W,w): Es la función que devuelve en forma de lista, los puntos que conforman las isobaras y los procesos que componen el ciclo Rankine. La entrada tiene exactamente la misma estructura que la de Proceso1, pero, en este caso, la W está restringida a 4 tipos de procesos: isoentrópicas, isotermas, isobaras e isoentálpicas. 
+def Curvas_ISO_Rankine(Y,y,Q,q,R,W,w):
+    Estado1=[]
+    Punto1=[]
+    Punto2=[]
+    iso=[]
+    Estado2=[]
+    TS=zip(vector_representacion_entropia,vector_representacion_temp)
+    Estado1=Estado_SU(Y,y,Q,q)
+    
+    Punto1=(Estado1[0][5],Estado1[0][1])
+    
+    if R=="P":
+        Estado2=Estado_SU(R,Estado1[0][0],W,w)
+        if Estado2[0]=='Valor fuera de rango':
+            return 'Segundo estado imposible de identificar'
+        else:
+            Punto2=(Estado2[0][5],Estado2[0][1])
+            Estados_Isobara1=GeneraPuntosDiagramaTS(Estado1[0][0])
+            PuntosT1=[a[1] for a in Estados_Isobara1]
+            PuntosS1=[a[5] for a in Estados_Isobara1]
+            isobara1=zip(PuntosS1,PuntosT1)
+
+            Estados_Isobara2=GeneraPuntosDiagramaTS(Estado2[0][0])                
+              
+            E=[]
+            E=[a[5] for a in Estados_Isobara2]
+            
+            i=0
+            while i<len(E):
+                if Estado1[0][5]>E[i]:
+                    i=i+1
+                else:
+                    break
+            e=0
+            while e<len(E):
+                if Estado2[0][5]>E[e]:
+                    e=e+1
+                else:
+                    break
+                     
+            iso=[Estado1[0]]+Estados_Isobara2[i:e]+[Estado2[0]]            
+               
+            PuntosT2=[a[1] for a in iso]
+            PuntosS2=[a[5] for a in iso]
+            isobara2=zip(PuntosS2,PuntosT2)
+            
+            return [iso,isobara1,isobara2]
+            
+    if R=="T":
+        Estado2=Estado_SU(W,w,R,Estado1[0][1])
+        if Estado2[0]=='Valor fuera de rango':
+            return 'Segundo estado imposible de identificar'
+        else:
+            Punto2=(Estado2[0][5],Estado2[0][1])
+            Estados_Isobara1=GeneraPuntosDiagramaTS(Estado1[0][0])
+            PuntosT1=[a[1] for a in Estados_Isobara1]
+            PuntosS1=[a[5] for a in Estados_Isobara1]
+            isobara1=zip(PuntosS1,PuntosT1)
+                
+            Estados_Isobara2=GeneraPuntosDiagramaTS(Estado2[0][0])
+            PuntosT2=[a[1] for a in Estados_Isobara2]
+            PuntosS2=[a[5] for a in Estados_Isobara2]
+            isobara2=zip(PuntosS2,PuntosT2)  
+            
+            iso=[Punto1,Punto2]
+            return [iso,isobara1,isobara2]
+
+    if R=="s":
+        Estado2=Estado_SU(W,w,R,Estado1[0][5])
+        if Estado2[0]=='Valor fuera de rango':
+            return 'Segundo estado imposible de identificar'
+        else:
+            if W=="P":
+                extremo1=Estado1[0][0]
+                extremo2=Estado2[0][0]
+                intervalo=(extremo2-extremo1)/10
+                vectorP=[extremo1,extremo1+intervalo,..,extremo2]
+                i=0
+                M=[]
+                iso=[]
+                D=[]
+                while i<len(vectorP):
+                    M.append(Estado_SU("P",vectorP[i],R,Estado1[0][5]))
+                    if M[i][0]=='Valor fuera de rango':
+                        i=i+1
+                    else:
+                        D.append(M[i])    
+                        i=i+1
+                H=[]
+                H=[a[0] for a in D]
+                C=[]
+                C=[a[1] for a in H]
+                T=[]
+                T=[a[5] for a in H]   
+                iso=zip(T,C)
+                Punto2=(Estado2[0][5],Estado2[0][1])
+                
+                Estados_Isobara1=GeneraPuntosDiagramaTS(Estado1[0][0])
+                PuntosT1=[a[1] for a in Estados_Isobara1]
+                PuntosS1=[a[5] for a in Estados_Isobara1]
+                isobara1=zip(PuntosS1,PuntosT1)
+                
+                Estados_Isobara2=GeneraPuntosDiagramaTS(Estado2[0][0])
+                PuntosT2=[a[1] for a in Estados_Isobara2]
+                PuntosS2=[a[5] for a in Estados_Isobara2]
+                isobara2=zip(PuntosS2,PuntosT2)
+                return [iso,isobara1,isobara2]
+    if R=="h":
+        Estado2=Estado_SU(W,w,R,Estado1[0][4])
+        if Estado2[0]=='Valor fuera de rango':
+            return 'Segundo estado imposible de identificar'
+        else:
+            if W=="P":
+                extremo1=Estado1[0][0]
+                extremo2=Estado2[0][0]
+                intervalo=(extremo2-extremo1)/10
+                vectorP=[extremo1,extremo1+intervalo,..,extremo2]
+                i=0
+                M=[]
+                iso=[]
+                D=[]
+                while i<len(vectorP):
+                    M.append(Estado_SU("P",vectorP[i],R,Estado1[0][4]))
+                    if M[i][0]=='Valor fuera de rango':
+                        i=i+1
+                    else:
+                        D.append(M[i])    
+                        i=i+1
+                H=[]
+                H=[a[0] for a in D]
+                C=[]
+                C=[a[1] for a in H]
+                T=[]
+                T=[a[5] for a in H]   
+                iso=zip(T,C)
+                Punto2=(Estado2[0][5],Estado2[0][1])
+                
+                Estados_Isobara1=GeneraPuntosDiagramaTS(Estado1[0][0])
+                PuntosT1=[a[1] for a in Estados_Isobara1]
+                PuntosS1=[a[5] for a in Estados_Isobara1]
+                isobara1=zip(PuntosS1,PuntosT1)
+                
+                Estados_Isobara2=GeneraPuntosDiagramaTS(Estado2[0][0])
+                PuntosT2=[a[1] for a in Estados_Isobara2]
+                PuntosS2=[a[5] for a in Estados_Isobara2]
+                isobara2=zip(PuntosS2,PuntosT2)
+                return [iso,isobara1,isobara2]  
+Bombeo_ST(h): Es una función que, en ausencia de tablas, y, siendo conocida la entalpía del estado, permite realizar una aproximación a líquido saturado para obtener su temperatura, y de esa forma obtener el resto de propiedades.
+def Bombeo_ST(h):
+    hg=[a[7] for a in aguasat_temp_T]
+    i=0
+    M=[]
+    while i<len(hg):
+        M.append([abs(h-hg[i]),hg[i]])
+        i=i+1
+    C=minimos(M)
+    if h<C[0][1] and h>hg[C[1][0]-1]:
+        t=interpola(aguasat_temp_T[C[1][0]-1][7],h,aguasat_temp_T[C[1][0]][7],aguasat_temp_T[C[1][0]-1][0],aguasat_temp_T[C[1][0]][0])
+        return t
+    if h>C[0][1] and h<hg[C[1][0]+1]:
+        t=interpola(aguasat_temp_T[C[1][0]][7],h,aguasat_temp_T[C[1][0]+1][7],aguasat_temp_T[C[1][0]][0],aguasat_temp_T[C[1][0]+1][0])
+        return t   
